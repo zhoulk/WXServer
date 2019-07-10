@@ -88,6 +88,21 @@ func (m *Module) CreateTables() {
 			panic(err)
 		}
 	}
+	if !m.db.HasTable(&UserExtendInfo{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&UserExtendInfo{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&UserSignInfo{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&UserSignInfo{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&UserClothInfo{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&UserClothInfo{}).Error; err != nil {
+			panic(err)
+		}
+	}
 }
 
 func (m *Module) IntializeTables() {

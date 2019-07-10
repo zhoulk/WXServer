@@ -37,3 +37,7 @@ func (m *Module) SavePlayer(player *entry.Player) error {
 	m.players[player.UserId] = player
 	return nil
 }
+
+func (m *Module) GetPlayer(uid string) *entry.Player {
+	return m.players[uid]
+}

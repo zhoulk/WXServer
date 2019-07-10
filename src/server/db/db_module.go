@@ -17,11 +17,38 @@ type User struct {
 }
 
 type UserBaseInfo struct {
-	Uid        string `gorm:"size:64;unique;not null"`
-	Name       string `gorm:"size:64"`
-	Star       int32
-	LvChao     int32
-	Diamond    int32
+	Uid     string `gorm:"size:64;unique;not null"`
+	Name    string `gorm:"size:64"`
+	headUrl string `gorm:"size:128"`
+	Star    int32
+	LvChao  int32
+	Diamond int32
+
+	gorm.Model
+}
+
+type UserExtendInfo struct {
+	Uid     string `gorm:"size:64;unique;not null"`
+	Level   int32
+	Scene   int32
+	Hair    int32
+	Coat    int32
+	Trouser int32
+	Neck    int32
+
+	gorm.Model
+}
+
+type UserSignInfo struct {
+	Uid      string `gorm:"size:64;unique;not null"`
+	SignTime time.Time
+
+	gorm.Model
+}
+
+type UserClothInfo struct {
+	Uid  string `gorm:"size:64;unique;not null"`
+	Snap string
 
 	gorm.Model
 }
