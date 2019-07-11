@@ -11,6 +11,7 @@ type Player struct {
 	Name       string
 	LoginTime  time.Time
 	LogoutTime time.Time
+	CreateTime time.Time
 
 	Star    int32
 	LvChao  int32

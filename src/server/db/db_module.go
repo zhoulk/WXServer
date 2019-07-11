@@ -41,11 +41,13 @@ type UserExtendInfo struct {
 
 type UserSignInfo struct {
 	Uid      string `gorm:"size:64;unique;not null"`
+	Day      string `gorm:"size:16"`
 	SignTime time.Time
 
 	gorm.Model
 }
 
+// UserClothInfo 用户衣服合成信息
 type UserClothInfo struct {
 	Uid  string `gorm:"size:64;unique;not null"`
 	Snap string
