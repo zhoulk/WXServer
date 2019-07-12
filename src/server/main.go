@@ -15,35 +15,41 @@ import (
 	"server/db"
 )
 
+// LoginRequest ..
 type LoginRequest struct {
 	Uid  string
 	Name string
 }
 
+// LoginResponse ..
 type LoginResponse struct {
 	Code   int
 	Result bool
 }
 
+// LogoutRequest ..
 type LogoutRequest struct {
 	Uid string
 }
 
+// LogoutResponse ..
 type LogoutResponse struct {
 	Code   int
 	Result bool
 }
 
+// GetUserInfoRequest ..
 type GetUserInfoRequest struct {
 	Uid string
 }
 
+// GetUserInfoResponse ..
 type GetUserInfoResponse struct {
 	Code int
 
 	Name    string
 	Star    int32
-	LvChao  int32
+	LvChao  string
 	Diamond int32
 	Level   int32
 	Scene   int32
@@ -51,14 +57,17 @@ type GetUserInfoResponse struct {
 	Coat    int32
 	Trouser int32
 	Neck    int32
+
+	OffLineLvChao string
 }
 
+// UserInfoRequest ..
 type UserInfoRequest struct {
 	Uid string
 
 	Name    string
 	Star    int32
-	LvChao  int32
+	LvChao  string
 	Diamond int32
 	Level   int32
 	Scene   int32
@@ -68,44 +77,53 @@ type UserInfoRequest struct {
 	Neck    int32
 }
 
+// UserInfoResponse ..
 type UserInfoResponse struct {
 	Code int
 }
 
+// GetClothRequest ..
 type GetClothRequest struct {
 	Uid string
 }
 
+// GetClothResponse ..
 type GetClothResponse struct {
 	Code int
 
 	Snap string
 }
 
+// ClothRequest ..
 type ClothRequest struct {
 	Uid string
 
 	Snap string
 }
 
+// ClothResponse ..
 type ClothResponse struct {
 	Code int
 }
 
+// GetSignRequest ..
 type GetSignRequest struct {
 	Uid string
 }
 
+// GetSignResponse ..
 type GetSignResponse struct {
 	Code int
 
 	Days []bool
 }
 
+// SignRequest ..
 type SignRequest struct {
 	Uid string
 }
 
+// SignResponse ..
 type SignResponse struct {
 	Code int
 
@@ -121,6 +139,9 @@ func main() {
 
 	m.LoadFromDB()
 
+	go Cal()
+	go Persistent()
+
 	// 注册函数，用户连接， 自动调用指定处理函数
 	http.HandleFunc("/login", LoginHandler)
 	http.HandleFunc("/logout", LogoutHandler)
@@ -135,6 +156,22 @@ func main() {
 	err := http.ListenAndServe(":12345", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
+// Cal 计算
+func Cal() {
+	for range time.Tick(time.Duration(1) * time.Second) {
+		m := db.GetInstance()
+		m.Cal()
+	}
+}
+
+// Persistent 固化
+func Persistent() {
+	for range time.Tick(time.Duration(10) * time.Second) {
+		m := db.GetInstance()
+		m.PersistentData()
 	}
 }
 
@@ -219,6 +256,7 @@ func LogoutHandler(w http.ResponseWriter, req *http.Request) {
 		p := m.GetPlayer(s.Uid)
 		p.LogoutTime = time.Now()
 		m.SavePlayer(p)
+		m.SaveSnap(p)
 
 		m.PersistentData()
 	}
@@ -270,6 +308,8 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		m := db.GetInstance()
 		player := m.GetPlayer(s.Uid)
 
+		log.Debug("GetUserInfoHandler  =====> %v   %v", s.Uid, player.Star)
+
 		res := new(GetUserInfoResponse)
 		res.Code = 200
 		res.Name = player.Name
@@ -282,6 +322,8 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		res.Coat = player.Coat
 		res.Trouser = player.Trouser
 		res.Neck = player.Neck
+
+		res.OffLineLvChao = m.GetOffLineLvChao(s.Uid)
 
 		// 给客户端回复数据
 		resBytes, err := json.Marshal(res)
@@ -564,7 +606,7 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 			if s.Star > 0 {
 				player.Star = s.Star
 			}
-			if s.LvChao > 0 {
+			if len(s.LvChao) > 0 {
 				player.LvChao = s.LvChao
 			}
 			if s.Diamond > 0 {
@@ -577,7 +619,7 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 				player.Scene = s.Scene
 			}
 			if s.Hair > 0 {
-				player.LvChao = s.Hair
+				player.Hair = s.Hair
 			}
 			if s.Coat > 0 {
 				player.Coat = s.Coat

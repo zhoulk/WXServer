@@ -34,6 +34,7 @@ func (m *Module) PersistentData() {
 	m.PersistentUser()
 	m.PersistentSign()
 	m.PersistentCloth()
+	m.PersistentSnap()
 }
 
 // PersistentUser 固化用户信息
@@ -140,6 +141,24 @@ func (m *Module) PersistentCloth() {
 	}
 }
 
+// PersistentSnap 固化快照
+func (m *Module) PersistentSnap() {
+	for uid, v := range m.snaps {
+		snap := UserSnapInfo{
+			Uid:    uid,
+			LvChao: v.LvChao,
+		}
+
+		var oldSnap UserSnapInfo
+		m.db.Where("uid = ?", snap.Uid).First(&oldSnap)
+		if snap.Uid != oldSnap.Uid {
+			m.db.Create(&snap)
+		} else {
+			m.db.Model(&snap).Where("uid = ?", snap.Uid).Updates(snap)
+		}
+	}
+}
+
 // CreateTables 创建表
 func (m *Module) CreateTables() {
 	if !m.db.HasTable(&User{}) {
@@ -167,22 +186,26 @@ func (m *Module) CreateTables() {
 			panic(err)
 		}
 	}
+	if !m.db.HasTable(&UserSnapInfo{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&UserSnapInfo{}).Error; err != nil {
+			panic(err)
+		}
+	}
 }
 
 // LoadFromDB 加载数据
 func (m *Module) LoadFromDB() {
 	log.Debug("loading data from db start ...")
-	m.LoadPlayer()
-	m.LoadCloth()
-	m.LoadSign()
+	m.loadPlayer()
+	m.loadCloth()
+	m.loadSign()
+	m.loadSnap()
 	log.Debug("loading data from db end ...")
 }
 
-// LoadPlayer 加载用户信息
-func (m *Module) LoadPlayer() {
+func (m *Module) loadPlayer() {
 	var users []*User
 	m.db.Find(&users)
-	tempPlayers := make(map[string]*entry.Player)
 	for _, user := range users {
 		player := new(entry.Player)
 		player.UserId = user.Uid
@@ -191,30 +214,47 @@ func (m *Module) LoadPlayer() {
 		player.LoginTime = user.LoginTime
 		player.LogoutTime = user.LogoutTime
 		player.CreateTime = user.CreatedAt
-		m.SavePlayer(player)
 
-		tempPlayers[user.Uid] = player
+		m.players[player.UserId] = player
 	}
 
 	var userBaseInfos []*UserBaseInfo
 	m.db.Find(&userBaseInfos)
 	for _, baseInfo := range userBaseInfos {
-		if tempPlayers[baseInfo.Uid] == nil {
+		if m.players[baseInfo.Uid] == nil {
 			continue
 		}
-		tempPlayers[baseInfo.Uid].Name = baseInfo.Name
-		tempPlayers[baseInfo.Uid].Star = baseInfo.Star
-		tempPlayers[baseInfo.Uid].Diamond = baseInfo.Diamond
-		tempPlayers[baseInfo.Uid].LvChao = baseInfo.LvChao
+		// log.Debug("userbaseInfo ==== %v", baseInfo.Uid)
+		m.players[baseInfo.Uid].Name = baseInfo.Name
+		m.players[baseInfo.Uid].Star = baseInfo.Star
+		m.players[baseInfo.Uid].Diamond = baseInfo.Diamond
+		m.players[baseInfo.Uid].LvChao = baseInfo.LvChao
 	}
 
-	tempPlayers = nil
+	var userExtendInfos []*UserExtendInfo
+	m.db.Find(&userExtendInfos)
+	for _, extendInfo := range userExtendInfos {
+		if m.players[extendInfo.Uid] == nil {
+			continue
+		}
+		// log.Debug("userbaseInfo ==== %v", baseInfo.Uid)
+		m.players[extendInfo.Uid].Level = extendInfo.Level
+		m.players[extendInfo.Uid].Scene = extendInfo.Scene
+		m.players[extendInfo.Uid].Coat = extendInfo.Coat
+		m.players[extendInfo.Uid].Trouser = extendInfo.Trouser
+		m.players[extendInfo.Uid].Hair = extendInfo.Hair
+		m.players[extendInfo.Uid].Neck = extendInfo.Neck
+	}
+
+	// for k, player := range m.players {
+	// 	log.Debug("player   =====> %v %v %v", k, player.UserId, player.Star)
+	// }
 
 	log.Debug("load players  db %v  mem %v", len(users), len(m.players))
 }
 
 // LoadCloth 加载衣服快照
-func (m *Module) LoadCloth() {
+func (m *Module) loadCloth() {
 	var clothInfos []*UserClothInfo
 	m.db.Find(&clothInfos)
 	for _, cloth := range clothInfos {
@@ -225,7 +265,7 @@ func (m *Module) LoadCloth() {
 }
 
 // LoadSign 加载签到
-func (m *Module) LoadSign() {
+func (m *Module) loadSign() {
 	var signInfos []*UserSignInfo
 	m.db.Find(&signInfos)
 	for _, sign := range signInfos {
@@ -245,4 +285,24 @@ func (m *Module) LoadSign() {
 	}
 
 	log.Debug("Load Signs  db %v  mem %v", len(signInfos), len(m.signs))
+}
+
+func (m *Module) loadSnap() {
+	var snapInfos []*UserSnapInfo
+	m.db.Find(&snapInfos)
+	for _, snap := range snapInfos {
+		if s, ok := m.snaps[snap.Uid]; ok {
+			s.LvChao = snap.LvChao
+		} else {
+			s := new(entry.Snap)
+			s.LvChao = snap.LvChao
+			m.snaps[snap.Uid] = s
+		}
+	}
+
+	for k, v := range m.snaps {
+		log.Debug("loadSnap  %v %v", k, v.LvChao)
+	}
+
+	log.Debug("Load Snaps  db %v  mem %v", len(snapInfos), len(m.snaps))
 }

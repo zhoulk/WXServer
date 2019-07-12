@@ -1,7 +1,10 @@
 package db
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"server/tool"
 	"sync"
 	"time"
 
@@ -15,6 +18,7 @@ type Module struct {
 	players map[string]*entry.Player
 	signs   map[string]map[string]time.Time
 	cloths  map[string]string
+	snaps   map[string]*entry.Snap
 
 	db *gorm.DB
 }
@@ -34,6 +38,7 @@ func init() {
 	GetInstance().players = make(map[string]*entry.Player)
 	GetInstance().signs = make(map[string]map[string]time.Time)
 	GetInstance().cloths = make(map[string]string)
+	GetInstance().snaps = make(map[string]*entry.Snap)
 }
 
 // SavePlayer 保存用户信息
@@ -45,6 +50,19 @@ func (m *Module) SavePlayer(player *entry.Player) error {
 	return nil
 }
 
+// SaveSnap 保存快照
+func (m *Module) SaveSnap(player *entry.Player) error {
+	if _, ok := m.snaps[player.UserId]; ok {
+		m.snaps[player.UserId].LvChao = player.LvChao
+	} else {
+		snap := new(entry.Snap)
+		snap.LvChao = player.LvChao
+		m.snaps[player.UserId] = snap
+	}
+
+	return nil
+}
+
 // SaveCloth 保存合成快照
 func (m *Module) SaveCloth(uid string, snap string) {
 	m.cloths[uid] = snap
@@ -53,6 +71,47 @@ func (m *Module) SaveCloth(uid string, snap string) {
 // GetPlayer 获取用户信息
 func (m *Module) GetPlayer(uid string) *entry.Player {
 	return m.players[uid]
+}
+
+// GetOffLineLvChao 获取离线绿钞
+func (m *Module) GetOffLineLvChao(uid string) string {
+	// for k, v := range m.snaps {
+	// 	log.Debug("GetOffLineLvChao %v %v %v", uid, k, v.LvChao)
+	// }
+
+	var lastLvChao = "[]"
+	if snap, ok := m.snaps[uid]; ok {
+		lastLvChao = snap.LvChao
+	}
+	lvChao := m.players[uid].LvChao
+
+	// log.Debug("GetOffLineLvChao %v %v ", uid, lastLvChao)
+
+	var s []int32
+	json.Unmarshal([]byte(lastLvChao), &s)
+	lastNum := new(tool.BigNumber)
+	lastNum.FromArr(s)
+
+	var s2 []int32
+	json.Unmarshal([]byte(lvChao), &s2)
+	curNum := new(tool.BigNumber)
+	curNum.FromArr(s2)
+
+	// log.Debug("GetOffLineLvChao ===> start\n %v\n %v ", curNum, lastNum)
+
+	curNum.Minus(lastNum)
+
+	// log.Debug("GetOffLineLvChao ===> end\n %v\n %v ", curNum, lastNum)
+
+	bs, _ := json.Marshal(curNum.ToArr())
+	return bytes.NewBuffer(bs).String()
+}
+
+// Cal 计算
+func (m *Module) Cal() {
+	for _, p := range m.players {
+		p.Cal()
+	}
 }
 
 // GetCloth 获取合成快照

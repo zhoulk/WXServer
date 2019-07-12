@@ -21,7 +21,7 @@ type UserBaseInfo struct {
 	Name    string `gorm:"size:64"`
 	headUrl string `gorm:"size:128"`
 	Star    int32
-	LvChao  int32
+	LvChao  string `gorm:"size:1024"`
 	Diamond int32
 
 	gorm.Model
@@ -51,6 +51,14 @@ type UserSignInfo struct {
 type UserClothInfo struct {
 	Uid  string `gorm:"size:64;unique;not null"`
 	Snap string
+
+	gorm.Model
+}
+
+// UserSnapInfo 最近一次登出时的数据
+type UserSnapInfo struct {
+	Uid    string `gorm:"size:64;unique;not null"`
+	LvChao string `gorm:"size:1024"`
 
 	gorm.Model
 }
