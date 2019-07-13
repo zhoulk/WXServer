@@ -42,11 +42,46 @@ func init() {
 }
 
 // SavePlayer 保存用户信息
-func (m *Module) SavePlayer(player *entry.Player) error {
-	if player == nil || len(player.UserId) == 0 {
+func (m *Module) SavePlayer(s *entry.Player) error {
+	if s == nil || len(s.UserId) == 0 {
 		return errors.New("player is nil or userId length is 0")
 	}
-	m.players[player.UserId] = player
+	if player, ok := m.players[s.UserId]; ok {
+		if len(s.Name) > 0 {
+			player.Name = s.Name
+		}
+		if s.Star > 0 {
+			player.Star = s.Star
+		} else {
+			player.Star = 1
+		}
+		if len(s.LvChao) > 0 {
+			player.LvChao = s.LvChao
+		}
+		if s.Diamond > 0 {
+			player.Diamond = s.Diamond
+		}
+		if s.Level > 0 {
+			player.Level = s.Level
+		}
+		if s.Scene > 0 {
+			player.Scene = s.Scene
+		}
+		if s.Hair > 0 {
+			player.Hair = s.Hair
+		}
+		if s.Coat > 0 {
+			player.Coat = s.Coat
+		}
+		if s.Trouser > 0 {
+			player.Trouser = s.Trouser
+		}
+		if s.Neck > 0 {
+			player.Neck = s.Neck
+		}
+	} else {
+		m.players[player.UserId] = player
+	}
 	return nil
 }
 
