@@ -161,7 +161,14 @@ func (m *Module) GetCloth(uid string) string {
 func (m *Module) Sign(uid string) {
 	now := time.Now()
 	day := now.Format("2006/1/2")
-	m.signs[uid][day] = time.Now()
+
+	if sign, ok := m.signs[uid]; ok {
+		sign[day] = time.Now()
+	} else {
+		m.signs[uid] = make(map[string]time.Time)
+		m.signs[uid][day] = time.Now()
+	}
+
 }
 
 // GetSign 获取签到信息

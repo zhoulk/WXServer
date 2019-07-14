@@ -115,9 +115,9 @@ func (m *Module) PersistentSign() {
 			}
 		}
 	}
-	for k := range m.signs {
-		delete(m.signs, k)
-	}
+	// for k := range m.signs {
+	// 	delete(m.signs, k)
+	// }
 }
 
 // PersistentCloth 固化衣服快照

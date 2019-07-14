@@ -115,7 +115,8 @@ type GetSignRequest struct {
 type GetSignResponse struct {
 	Code int
 
-	Days []bool
+	StartDay string
+	Days     []bool
 }
 
 // SignRequest ..
@@ -433,7 +434,7 @@ func GetSignHandler(w http.ResponseWriter, req *http.Request) {
 
 		var bools = make([]bool, 7)
 		j := 0
-		for i := days - 1; i >= 0; i-- {
+		for i := days; i >= 0; i-- {
 			d := time.Now().AddDate(0, 0, -i).Format("2006/1/2")
 			log.Debug("dddddd  %v ", d)
 			if _, ok := signDic[d]; ok {
@@ -444,6 +445,7 @@ func GetSignHandler(w http.ResponseWriter, req *http.Request) {
 
 		res := new(GetSignResponse)
 		res.Code = 200
+		res.StartDay = time.Now().AddDate(0, 0, -days).Format("2006/1/2")
 		res.Days = bools
 
 		// 给客户端回复数据
