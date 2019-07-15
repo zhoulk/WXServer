@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/name5566/leaf/log"
 
 	"server/entry"
 )
@@ -50,10 +51,12 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 		if len(s.Name) > 0 {
 			player.Name = s.Name
 		}
-		if s.Star > 0 {
-			player.Star = s.Star
-		} else {
-			player.Star = 1
+		star := s.Star
+		if star == 0 {
+			star = 1
+		}
+		if player.Star < star {
+			player.Star = star
 		}
 		if len(s.LvChao) > 0 {
 			player.LvChao = s.LvChao
@@ -80,7 +83,7 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 			player.Neck = s.Neck
 		}
 	} else {
-		m.players[player.UserId] = player
+		m.players[s.UserId] = s
 	}
 	return nil
 }
@@ -101,6 +104,9 @@ func (m *Module) SaveSnap(player *entry.Player) error {
 // SaveCloth 保存合成快照
 func (m *Module) SaveCloth(uid string, snap string) {
 	m.cloths[uid] = snap
+	for k, v := range m.cloths {
+		log.Debug("SaveCloth  %v  %v  %v", uid, k, v)
+	}
 }
 
 // GetPlayer 获取用户信息
@@ -168,10 +174,18 @@ func (m *Module) Sign(uid string) {
 		m.signs[uid] = make(map[string]time.Time)
 		m.signs[uid][day] = time.Now()
 	}
-
 }
 
 // GetSign 获取签到信息
 func (m *Module) GetSign(uid string) map[string]time.Time {
 	return m.signs[uid]
+}
+
+// Heart 心跳
+func (m *Module) Heart(uid string) {
+	if player, ok := m.players[uid]; ok {
+		player.LogoutTime = time.Now()
+
+		m.SaveSnap(player)
+	}
 }

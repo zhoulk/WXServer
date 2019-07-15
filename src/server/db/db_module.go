@@ -21,6 +21,7 @@ type UserBaseInfo struct {
 	Name    string `gorm:"size:64"`
 	headUrl string `gorm:"size:128"`
 	Star    int32
+	Exp     int32
 	LvChao  string `gorm:"size:1024"`
 	Diamond int32
 
@@ -35,12 +36,13 @@ type UserExtendInfo struct {
 	Coat    int32
 	Trouser int32
 	Neck    int32
+	Shoe    int32
 
 	gorm.Model
 }
 
 type UserSignInfo struct {
-	Uid      string `gorm:"size:64;unique;not null"`
+	Uid      string `gorm:"size:64;not null"`
 	Day      string `gorm:"size:16"`
 	SignTime time.Time
 
@@ -50,7 +52,7 @@ type UserSignInfo struct {
 // UserClothInfo 用户衣服合成信息
 type UserClothInfo struct {
 	Uid  string `gorm:"size:64;unique;not null"`
-	Snap string
+	Snap string `gorm:"size:1024"`
 
 	gorm.Model
 }

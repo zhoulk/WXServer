@@ -15,7 +15,8 @@ import (
 
 const (
 	// DBDriver 数据库地址
-	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
+	// DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
+	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
 )
 
 // ConnectDB 连接数据库
@@ -61,9 +62,12 @@ func (m *Module) PersistentUser() {
 			Uid:     player.UserId,
 			Name:    player.Name,
 			Star:    player.Star,
+			Exp:     player.Exp,
 			LvChao:  player.LvChao,
 			Diamond: player.Diamond,
 		}
+
+		// log.Debug("PersistentUser   ==== > %v ", userBaseInfo)
 
 		var oldUserInfo UserBaseInfo
 		m.db.Where("uid = ?", userBaseInfo.Uid).First(&oldUserInfo)
@@ -81,6 +85,7 @@ func (m *Module) PersistentUser() {
 			Coat:    player.Coat,
 			Trouser: player.Trouser,
 			Neck:    player.Neck,
+			Shoe:    player.Shoe,
 		}
 
 		var oldExtendInfo UserExtendInfo
@@ -122,6 +127,7 @@ func (m *Module) PersistentSign() {
 
 // PersistentCloth 固化衣服快照
 func (m *Module) PersistentCloth() {
+	cnt := 0
 	for uid, v := range m.cloths {
 		cloth := UserClothInfo{
 			Uid:  uid,
@@ -135,10 +141,11 @@ func (m *Module) PersistentCloth() {
 		} else {
 			m.db.Model(&cloth).Where("uid = ?", cloth.Uid).Updates(cloth)
 		}
+
+		cnt++
 	}
-	for k := range m.cloths {
-		delete(m.cloths, k)
-	}
+
+	log.Debug("persistent cloth %v ", cnt)
 }
 
 // PersistentSnap 固化快照
@@ -227,6 +234,7 @@ func (m *Module) loadPlayer() {
 		// log.Debug("userbaseInfo ==== %v", baseInfo.Uid)
 		m.players[baseInfo.Uid].Name = baseInfo.Name
 		m.players[baseInfo.Uid].Star = baseInfo.Star
+		m.players[baseInfo.Uid].Exp = baseInfo.Exp
 		m.players[baseInfo.Uid].Diamond = baseInfo.Diamond
 		m.players[baseInfo.Uid].LvChao = baseInfo.LvChao
 	}
@@ -244,6 +252,7 @@ func (m *Module) loadPlayer() {
 		m.players[extendInfo.Uid].Trouser = extendInfo.Trouser
 		m.players[extendInfo.Uid].Hair = extendInfo.Hair
 		m.players[extendInfo.Uid].Neck = extendInfo.Neck
+		m.players[extendInfo.Uid].Shoe = extendInfo.Shoe
 	}
 
 	// for k, player := range m.players {

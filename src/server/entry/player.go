@@ -17,6 +17,7 @@ type Player struct {
 	CreateTime time.Time
 
 	Star    int32
+	Exp     int32
 	LvChao  string
 	Diamond int32
 	Level   int32
@@ -25,6 +26,7 @@ type Player struct {
 	Coat    int32
 	Trouser int32
 	Neck    int32
+	Shoe    int32
 }
 
 // Cal 计算

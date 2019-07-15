@@ -15,6 +15,16 @@ import (
 	"server/db"
 )
 
+// HeartRequest ..
+type HeartRequest struct {
+	Uid string
+}
+
+// HeartResponse ..
+type HeartResponse struct {
+	Code int
+}
+
 // LoginRequest ..
 type LoginRequest struct {
 	Uid  string
@@ -49,6 +59,7 @@ type GetUserInfoResponse struct {
 
 	Name    string
 	Star    int32
+	Exp     int32
 	LvChao  string
 	Diamond int32
 	Level   int32
@@ -57,6 +68,7 @@ type GetUserInfoResponse struct {
 	Coat    int32
 	Trouser int32
 	Neck    int32
+	Shoe    int32
 
 	OffLineLvChao string
 }
@@ -67,6 +79,7 @@ type UserInfoRequest struct {
 
 	Name    string
 	Star    int32
+	Exp     int32
 	LvChao  string
 	Diamond int32
 	Level   int32
@@ -75,6 +88,7 @@ type UserInfoRequest struct {
 	Coat    int32
 	Trouser int32
 	Neck    int32
+	Shoe    int32
 }
 
 // UserInfoResponse ..
@@ -131,6 +145,28 @@ type SignResponse struct {
 	Days []bool
 }
 
+// RankRequest ..
+type RankRequest struct {
+	Uid string
+
+	Type int32 // 1 世界排行   2 好友排行   3 粉丝榜
+}
+
+// RankResponse ..
+type RankResponse struct {
+	Code int
+
+	Players []*RankInfo
+}
+
+// RankInfo ...
+type RankInfo struct {
+	Order    int32
+	Uid      string
+	NickName string
+	Star     int32
+}
+
 func main() {
 	fmt.Println("start main")
 
@@ -152,6 +188,8 @@ func main() {
 	http.HandleFunc("/getCloth", GetClothHandler)
 	http.HandleFunc("/userInfo", UserInfoHandler)
 	http.HandleFunc("/getUserInfo", GetUserInfoHandler)
+	http.HandleFunc("/heart", HeartHandler)
+	http.HandleFunc("/rank", RankHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -174,6 +212,102 @@ func Persistent() {
 		m := db.GetInstance()
 		m.PersistentData()
 	}
+}
+
+// RankHandler  排行榜
+func RankHandler(w http.ResponseWriter, req *http.Request) {
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
+	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
+	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+	fmt.Println(req.Method)
+	fmt.Println(req.Header)
+	fmt.Println(req.Body)
+	fmt.Println(req.URL)
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+	} else {
+		fmt.Println(bytes.NewBuffer(result).String())
+		var str = bytes.NewBuffer(result).String()
+
+		var s RankRequest
+		json.Unmarshal([]byte(str), &s)
+		fmt.Println(s.Uid)
+
+	}
+
+	res := new(RankResponse)
+	res.Code = 200
+	res.Players = make([]*RankInfo, 0)
+
+	for i := 0; i < 2; i++ {
+		rankInfo := new(RankInfo)
+		rankInfo.Order = int32(i + 1)
+		rankInfo.NickName = fmt.Sprintf("%s%v", "asasas", i)
+		rankInfo.Star = int32(200 - i)
+		res.Players = append(res.Players, rankInfo)
+	}
+
+	// 给客户端回复数据
+	resBytes, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println("生成json字符串错误")
+	}
+
+	fmt.Println(bytes.NewBuffer(resBytes).String())
+	// io.WriteString(w, "{\"a\" : 11}")
+	w.Write(resBytes)
+}
+
+// HeartHandler  心跳处理
+func HeartHandler(w http.ResponseWriter, req *http.Request) {
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
+	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
+	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+	fmt.Println(req.Method)
+	fmt.Println(req.Header)
+	fmt.Println(req.Body)
+	fmt.Println(req.URL)
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+	} else {
+		fmt.Println(bytes.NewBuffer(result).String())
+		var str = bytes.NewBuffer(result).String()
+
+		var s HeartRequest
+		json.Unmarshal([]byte(str), &s)
+		fmt.Println(s.Uid)
+
+		m := db.GetInstance()
+		m.Heart(s.Uid)
+	}
+
+	res := new(HeartResponse)
+	res.Code = 200
+	// 给客户端回复数据
+	resBytes, err := json.Marshal(res)
+	if err != nil {
+		fmt.Println("生成json字符串错误")
+	}
+
+	fmt.Println(bytes.NewBuffer(resBytes).String())
+	// io.WriteString(w, "{\"a\" : 11}")
+	w.Write(resBytes)
 }
 
 // LoginHandler  登录处理
@@ -209,8 +343,6 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 		p.Name = s.Name
 		p.LoginTime = time.Now()
 		m.SavePlayer(p)
-
-		m.PersistentData()
 	}
 
 	res := new(LoginResponse)
@@ -258,8 +390,6 @@ func LogoutHandler(w http.ResponseWriter, req *http.Request) {
 		p.LogoutTime = time.Now()
 		m.SavePlayer(p)
 		m.SaveSnap(p)
-
-		m.PersistentData()
 	}
 
 	res := new(LogoutResponse)
@@ -315,6 +445,7 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		res.Code = 200
 		res.Name = player.Name
 		res.Star = player.Star
+		res.Exp = player.Exp
 		res.LvChao = player.LvChao
 		res.Diamond = player.Diamond
 		res.Level = player.Level
@@ -323,6 +454,7 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		res.Coat = player.Coat
 		res.Trouser = player.Trouser
 		res.Neck = player.Neck
+		res.Shoe = player.Shoe
 
 		res.OffLineLvChao = m.GetOffLineLvChao(s.Uid)
 
@@ -372,6 +504,9 @@ func GetClothHandler(w http.ResponseWriter, req *http.Request) {
 
 		m := db.GetInstance()
 		clothSnap := m.GetCloth(s.Uid)
+		if len(clothSnap) == 0 {
+			clothSnap = "[]"
+		}
 
 		// log.Debug("GetClothHandler %v", clothSnap)
 
@@ -496,7 +631,6 @@ func SignHandler(w http.ResponseWriter, req *http.Request) {
 
 		m := db.GetInstance()
 		m.Sign(s.Uid)
-		m.PersistentData()
 
 		res := new(SignResponse)
 		res.Code = 200
@@ -549,7 +683,6 @@ func ClothHandler(w http.ResponseWriter, req *http.Request) {
 
 		m := db.GetInstance()
 		m.SaveCloth(s.Uid, s.Snap)
-		m.PersistentData()
 
 		res := new(ClothResponse)
 		res.Code = 200
@@ -605,8 +738,9 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 			if len(s.Name) > 0 {
 				player.Name = s.Name
 			}
-			if s.Star > 0 {
+			if s.Star > 0 && player.Star <= s.Star {
 				player.Star = s.Star
+				player.Exp = s.Exp
 			}
 			if len(s.LvChao) > 0 {
 				player.LvChao = s.LvChao
@@ -632,8 +766,11 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 			if s.Neck > 0 {
 				player.Neck = s.Neck
 			}
+			if s.Shoe > 0 {
+				player.Shoe = s.Shoe
+			}
+			m.SavePlayer(player)
 		}
-		m.PersistentData()
 
 		res := new(UserInfoResponse)
 		res.Code = 200
