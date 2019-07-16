@@ -38,6 +38,35 @@ func (m *Module) PersistentData() {
 	m.PersistentSnap()
 }
 
+// Rank 排序
+func (m *Module) Rank() {
+	m.RankPlayer()
+}
+
+// RankPlayer 固化用户信息
+func (m *Module) RankPlayer() {
+	var userBaseInfos []*UserBaseInfo
+	m.db.Order("star desc").Order("uid").Find(&userBaseInfos)
+
+	m.rankPlayers = m.rankPlayers[0:0]
+
+	var index = 0
+	for _, baseInfo := range userBaseInfos {
+		p := new(entry.Player)
+		p.UserId = baseInfo.Uid
+		p.Star = baseInfo.Star
+		p.Name = baseInfo.Name
+		if index < 100 {
+			m.rankPlayers = append(m.rankPlayers, p)
+		}
+
+		index++
+		if p, ok := m.players[baseInfo.Uid]; ok {
+			p.Order = int32(index)
+		}
+	}
+}
+
 // PersistentUser 固化用户信息
 func (m *Module) PersistentUser() {
 	cnt := 0
@@ -211,6 +240,7 @@ func (m *Module) LoadFromDB() {
 }
 
 func (m *Module) loadPlayer() {
+	tempPlayers := make(map[string]*entry.Player)
 	var users []*User
 	m.db.Find(&users)
 	for _, user := range users {
@@ -222,42 +252,42 @@ func (m *Module) loadPlayer() {
 		player.LogoutTime = user.LogoutTime
 		player.CreateTime = user.CreatedAt
 
-		m.players[player.UserId] = player
+		tempPlayers[player.UserId] = player
 	}
 
 	var userBaseInfos []*UserBaseInfo
 	m.db.Find(&userBaseInfos)
 	for _, baseInfo := range userBaseInfos {
-		if m.players[baseInfo.Uid] == nil {
+		if tempPlayers[baseInfo.Uid] == nil {
 			continue
 		}
 		// log.Debug("userbaseInfo ==== %v", baseInfo.Uid)
-		m.players[baseInfo.Uid].Name = baseInfo.Name
-		m.players[baseInfo.Uid].Star = baseInfo.Star
-		m.players[baseInfo.Uid].Exp = baseInfo.Exp
-		m.players[baseInfo.Uid].Diamond = baseInfo.Diamond
-		m.players[baseInfo.Uid].LvChao = baseInfo.LvChao
+		tempPlayers[baseInfo.Uid].Name = baseInfo.Name
+		tempPlayers[baseInfo.Uid].Star = baseInfo.Star
+		tempPlayers[baseInfo.Uid].Exp = baseInfo.Exp
+		tempPlayers[baseInfo.Uid].Diamond = baseInfo.Diamond
+		tempPlayers[baseInfo.Uid].LvChao = baseInfo.LvChao
 	}
 
 	var userExtendInfos []*UserExtendInfo
 	m.db.Find(&userExtendInfos)
 	for _, extendInfo := range userExtendInfos {
-		if m.players[extendInfo.Uid] == nil {
+		if tempPlayers[extendInfo.Uid] == nil {
 			continue
 		}
 		// log.Debug("userbaseInfo ==== %v", baseInfo.Uid)
-		m.players[extendInfo.Uid].Level = extendInfo.Level
-		m.players[extendInfo.Uid].Scene = extendInfo.Scene
-		m.players[extendInfo.Uid].Coat = extendInfo.Coat
-		m.players[extendInfo.Uid].Trouser = extendInfo.Trouser
-		m.players[extendInfo.Uid].Hair = extendInfo.Hair
-		m.players[extendInfo.Uid].Neck = extendInfo.Neck
-		m.players[extendInfo.Uid].Shoe = extendInfo.Shoe
+		tempPlayers[extendInfo.Uid].Level = extendInfo.Level
+		tempPlayers[extendInfo.Uid].Scene = extendInfo.Scene
+		tempPlayers[extendInfo.Uid].Coat = extendInfo.Coat
+		tempPlayers[extendInfo.Uid].Trouser = extendInfo.Trouser
+		tempPlayers[extendInfo.Uid].Hair = extendInfo.Hair
+		tempPlayers[extendInfo.Uid].Neck = extendInfo.Neck
+		tempPlayers[extendInfo.Uid].Shoe = extendInfo.Shoe
 	}
 
-	// for k, player := range m.players {
-	// 	log.Debug("player   =====> %v %v %v", k, player.UserId, player.Star)
-	// }
+	for _, player := range tempPlayers {
+		m.SavePlayer(player)
+	}
 
 	log.Debug("load players  db %v  mem %v", len(users), len(m.players))
 }
@@ -309,9 +339,9 @@ func (m *Module) loadSnap() {
 		}
 	}
 
-	for k, v := range m.snaps {
-		log.Debug("loadSnap  %v %v", k, v.LvChao)
-	}
+	// for k, v := range m.snaps {
+	// 	log.Debug("loadSnap  %v %v", k, v.LvChao)
+	// }
 
 	log.Debug("Load Snaps  db %v  mem %v", len(snapInfos), len(m.snaps))
 }

@@ -27,6 +27,8 @@ type Player struct {
 	Trouser int32
 	Neck    int32
 	Shoe    int32
+
+	Order int32
 }
 
 // Cal 计算

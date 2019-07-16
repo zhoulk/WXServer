@@ -9,17 +9,17 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/name5566/leaf/log"
 
 	"server/entry"
 )
 
 // Module ...
 type Module struct {
-	players map[string]*entry.Player
-	signs   map[string]map[string]time.Time
-	cloths  map[string]string
-	snaps   map[string]*entry.Snap
+	players     map[string]*entry.Player
+	signs       map[string]map[string]time.Time
+	cloths      map[string]string
+	snaps       map[string]*entry.Snap
+	rankPlayers []*entry.Player
 
 	db *gorm.DB
 }
@@ -40,6 +40,7 @@ func init() {
 	GetInstance().signs = make(map[string]map[string]time.Time)
 	GetInstance().cloths = make(map[string]string)
 	GetInstance().snaps = make(map[string]*entry.Snap)
+	GetInstance().rankPlayers = make([]*entry.Player, 0)
 }
 
 // SavePlayer 保存用户信息
@@ -104,9 +105,9 @@ func (m *Module) SaveSnap(player *entry.Player) error {
 // SaveCloth 保存合成快照
 func (m *Module) SaveCloth(uid string, snap string) {
 	m.cloths[uid] = snap
-	for k, v := range m.cloths {
-		log.Debug("SaveCloth  %v  %v  %v", uid, k, v)
-	}
+	// for k, v := range m.cloths {
+	// 	log.Debug("SaveCloth  %v  %v  %v", uid, k, v)
+	// }
 }
 
 // GetPlayer 获取用户信息
@@ -181,6 +182,11 @@ func (m *Module) GetSign(uid string) map[string]time.Time {
 	return m.signs[uid]
 }
 
+// GetRank 获取排行榜
+func (m *Module) GetRank() []*entry.Player {
+	return m.rankPlayers
+}
+
 // Heart 心跳
 func (m *Module) Heart(uid string) {
 	if player, ok := m.players[uid]; ok {
@@ -189,3 +195,39 @@ func (m *Module) Heart(uid string) {
 		m.SaveSnap(player)
 	}
 }
+
+// func (m *Module) Rank() {
+// 	// log.Debug("rank  ====>  %v %v %v", p.Name, p.Star, p.UserId)
+// 	var insertIndex = -1
+// 	var existIndex = -1
+// 	if len(m.rankPlayers) == 0 {
+// 		insertIndex = 0
+// 	} else {
+// 		for i := len(m.rankPlayers) - 1; i >= 0; i-- {
+// 			if p.Star >= m.rankPlayers[i].Star {
+// 				insertIndex = i
+// 			}
+// 			if m.rankPlayers[i].UserId == p.UserId {
+// 				existIndex = i
+// 			}
+// 		}
+// 	}
+
+// 	// log.Debug("rank  ====>  %v %v", insertIndex, existIndex)
+
+// 	if insertIndex >= 0 {
+// 		if existIndex >= 0 {
+// 			m.rankPlayers = append(m.rankPlayers[:existIndex], m.rankPlayers[existIndex+1:]...)
+// 		}
+// 		last := append([]*entry.Player{}, m.rankPlayers[insertIndex:]...)
+// 		m.rankPlayers = append(append(m.rankPlayers[:insertIndex], p), last...)
+// 	} else {
+// 		if existIndex == -1 && len(m.rankPlayers) < 100 {
+// 			m.rankPlayers = append(m.rankPlayers, p)
+// 		}
+// 	}
+
+// 	// for i := 0; i < len(m.rankPlayers); i++ {
+// 	// 	log.Debug("rankPlayers  ====>  %v %v", m.rankPlayers[i].UserId, m.rankPlayers[i].Star)
+// 	// }
+// }

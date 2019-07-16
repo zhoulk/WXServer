@@ -157,6 +157,7 @@ type RankResponse struct {
 	Code int
 
 	Players []*RankInfo
+	Me      *RankInfo
 }
 
 // RankInfo ...
@@ -175,9 +176,11 @@ func main() {
 	m.CreateTables()
 
 	m.LoadFromDB()
+	m.Rank()
 
 	go Cal()
 	go Persistent()
+	go Rank()
 
 	// 注册函数，用户连接， 自动调用指定处理函数
 	http.HandleFunc("/login", LoginHandler)
@@ -214,6 +217,12 @@ func Persistent() {
 	}
 }
 
+// Rank  排序
+func Rank() {
+	m := db.GetInstance()
+	m.Rank()
+}
+
 // RankHandler  排行榜
 func RankHandler(w http.ResponseWriter, req *http.Request) {
 
@@ -232,28 +241,47 @@ func RankHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL)
 
 	result, err := ioutil.ReadAll(req.Body)
+	var s RankRequest
+
 	if err != nil {
+		res := new(GetUserInfoResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+		return
 	} else {
 		fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
 
-		var s RankRequest
 		json.Unmarshal([]byte(str), &s)
-		fmt.Println(s.Uid)
-
 	}
+
+	m := db.GetInstance()
+	ranks := m.GetRank()
 
 	res := new(RankResponse)
 	res.Code = 200
 	res.Players = make([]*RankInfo, 0)
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < len(ranks); i++ {
+		p := ranks[i]
 		rankInfo := new(RankInfo)
 		rankInfo.Order = int32(i + 1)
-		rankInfo.NickName = fmt.Sprintf("%s%v", "asasas", i)
-		rankInfo.Star = int32(200 - i)
+		rankInfo.NickName = p.UserId
+		rankInfo.Star = p.Star
 		res.Players = append(res.Players, rankInfo)
 	}
+
+	me := m.GetPlayer(s.Uid)
+	meRankInfo := new(RankInfo)
+	meRankInfo.Order = me.Order
+	meRankInfo.NickName = me.UserId
+	meRankInfo.Star = me.Star
+	res.Me = meRankInfo
 
 	// 给客户端回复数据
 	resBytes, err := json.Marshal(res)
@@ -446,7 +474,11 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		res.Name = player.Name
 		res.Star = player.Star
 		res.Exp = player.Exp
-		res.LvChao = player.LvChao
+		if len(player.LvChao) > 0 {
+			res.LvChao = player.LvChao
+		} else {
+			res.LvChao = "[]"
+		}
 		res.Diamond = player.Diamond
 		res.Level = player.Level
 		res.Scene = player.Scene
@@ -733,44 +765,43 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Println(s.Uid, "  ", s.Star, "  ", s.LvChao, "  ", len(s.Name), "  ", s.Diamond)
 
 		m := db.GetInstance()
-		player := m.GetPlayer(s.Uid)
-		if player != nil {
-			if len(s.Name) > 0 {
-				player.Name = s.Name
-			}
-			if s.Star > 0 && player.Star <= s.Star {
-				player.Star = s.Star
-				player.Exp = s.Exp
-			}
-			if len(s.LvChao) > 0 {
-				player.LvChao = s.LvChao
-			}
-			if s.Diamond > 0 {
-				player.Diamond = s.Diamond
-			}
-			if s.Level > 0 {
-				player.Level = s.Level
-			}
-			if s.Scene > 0 {
-				player.Scene = s.Scene
-			}
-			if s.Hair > 0 {
-				player.Hair = s.Hair
-			}
-			if s.Coat > 0 {
-				player.Coat = s.Coat
-			}
-			if s.Trouser > 0 {
-				player.Trouser = s.Trouser
-			}
-			if s.Neck > 0 {
-				player.Neck = s.Neck
-			}
-			if s.Shoe > 0 {
-				player.Shoe = s.Shoe
-			}
-			m.SavePlayer(player)
+		player := new(entry.Player)
+		player.UserId = s.Uid
+		if len(s.Name) > 0 {
+			player.Name = s.Name
 		}
+		if s.Star > 0 && player.Star <= s.Star {
+			player.Star = s.Star
+			player.Exp = s.Exp
+		}
+		if len(s.LvChao) > 0 {
+			player.LvChao = s.LvChao
+		}
+		if s.Diamond > 0 {
+			player.Diamond = s.Diamond
+		}
+		if s.Level > 0 {
+			player.Level = s.Level
+		}
+		if s.Scene > 0 {
+			player.Scene = s.Scene
+		}
+		if s.Hair > 0 {
+			player.Hair = s.Hair
+		}
+		if s.Coat > 0 {
+			player.Coat = s.Coat
+		}
+		if s.Trouser > 0 {
+			player.Trouser = s.Trouser
+		}
+		if s.Neck > 0 {
+			player.Neck = s.Neck
+		}
+		if s.Shoe > 0 {
+			player.Shoe = s.Shoe
+		}
+		m.SavePlayer(player)
 
 		res := new(UserInfoResponse)
 		res.Code = 200
