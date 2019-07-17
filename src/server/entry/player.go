@@ -11,6 +11,8 @@ type Player struct {
 	UserId     string
 	Account    string
 	Password   string
+	OpenId     string
+	HeadUrl    string
 	Name       string
 	LoginTime  time.Time
 	LogoutTime time.Time

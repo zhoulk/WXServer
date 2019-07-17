@@ -10,6 +10,7 @@ type User struct {
 	Uid        string `gorm:"size:64;unique;not null"`
 	Account    string `gorm:"size:128"`
 	Password   string `gorm:"size:64"`
+	OpenId     string `gorm:"size:64"`
 	LoginTime  time.Time
 	LogoutTime time.Time
 
@@ -19,7 +20,7 @@ type User struct {
 type UserBaseInfo struct {
 	Uid     string `gorm:"size:64;unique;not null"`
 	Name    string `gorm:"size:64"`
-	headUrl string `gorm:"size:128"`
+	HeadUrl string `gorm:"size:128"`
 	Star    int32
 	Exp     int32
 	LvChao  string `gorm:"size:1024"`

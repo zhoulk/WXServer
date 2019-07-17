@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"server/config"
 	"server/entry"
+	"server/tool"
 	"time"
 
 	"github.com/name5566/leaf/log"
@@ -27,14 +29,17 @@ type HeartResponse struct {
 
 // LoginRequest ..
 type LoginRequest struct {
-	Uid  string
-	Name string
+	Uid     string
+	Name    string
+	Code    string
+	HeadUrl string
 }
 
 // LoginResponse ..
 type LoginResponse struct {
 	Code   int
 	Result bool
+	Uid    string
 }
 
 // LogoutRequest ..
@@ -166,6 +171,24 @@ type RankInfo struct {
 	Uid      string
 	NickName string
 	Star     int32
+	HeadUrl  string
+}
+
+// WXCode2SessionResponse ...
+type WXCode2SessionResponse struct {
+	Openid      string //用户唯一标识
+	Session_key string //会话密钥
+	Unionid     string //用户在开放平台的唯一标识符，在满足 UnionID 下发条件的情况下会返回，详见 UnionID 机制说明。
+	Errcode     int32  //错误码
+	Errmsg      string //错误信息
+}
+
+// WXGetTokenResponse ...
+type WXGetTokenResponse struct {
+	Access_token string //获取到的凭证
+	Expires_in   int32  //凭证有效时间，单位：秒。目前是7200秒之内的值。
+	Errcode      int32  //错误码
+	Errmsg       string //错误信息
 }
 
 func main() {
@@ -181,6 +204,8 @@ func main() {
 	go Cal()
 	go Persistent()
 	go Rank()
+
+	GetWXAccessToken()
 
 	// 注册函数，用户连接， 自动调用指定处理函数
 	http.HandleFunc("/login", LoginHandler)
@@ -223,22 +248,41 @@ func Rank() {
 	m.Rank()
 }
 
+// GetWXAccessToken 获取 微信token
+func GetWXAccessToken() {
+	log.Debug("GetWXAccessToken start ==================================== ")
+
+	url := "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + config.WXAPPId + "&secret=" + config.WXSecretKey
+	res, err := http.Get(url)
+	if err != nil {
+		log.Debug("request err %v %v %v", url, res, err)
+	}
+	defer res.Body.Close()
+
+	log.Debug("GetWXAccessToken request %v ", url)
+
+	web, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Debug("GetWXAccessToken request err %v ", err)
+	} else {
+		var result WXGetTokenResponse
+		if err := json.Unmarshal(web, &result); err != nil {
+			log.Debug("GetWXAccessToken request err %v", err)
+		}
+		log.Debug("GetWXAccessToken response %v ", result)
+	}
+	log.Debug("GetWXAccessToken end ==================================== ")
+}
+
 // RankHandler  排行榜
 func RankHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("RankHandler start ===================================")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
-
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
 
 	result, err := ioutil.ReadAll(req.Body)
 	var s RankRequest
@@ -252,162 +296,174 @@ func RankHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println("生成json字符串错误")
 		}
 		w.Write(resBytes)
-		return
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
+		log.Debug("RankHandler request %v", bytes.NewBuffer(result).String())
+
 		var str = bytes.NewBuffer(result).String()
-
 		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		ranks := m.GetRank()
+
+		res := new(RankResponse)
+		res.Code = 200
+		res.Players = make([]*RankInfo, 0)
+
+		for i := 0; i < len(ranks); i++ {
+			p := ranks[i]
+			rankInfo := new(RankInfo)
+			rankInfo.Order = int32(i + 1)
+			rankInfo.NickName = p.Name
+			rankInfo.HeadUrl = p.HeadUrl
+			rankInfo.Star = p.Star
+			res.Players = append(res.Players, rankInfo)
+		}
+
+		me := m.GetPlayer(s.Uid)
+		// log.Debug("  asas  %v %v ", me.UserId, me.HeadUrl)
+		meRankInfo := new(RankInfo)
+		meRankInfo.Order = me.Order
+		meRankInfo.NickName = me.Name
+		meRankInfo.HeadUrl = me.HeadUrl
+		meRankInfo.Star = me.Star
+		res.Me = meRankInfo
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("RankHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
 	}
-
-	m := db.GetInstance()
-	ranks := m.GetRank()
-
-	res := new(RankResponse)
-	res.Code = 200
-	res.Players = make([]*RankInfo, 0)
-
-	for i := 0; i < len(ranks); i++ {
-		p := ranks[i]
-		rankInfo := new(RankInfo)
-		rankInfo.Order = int32(i + 1)
-		rankInfo.NickName = p.UserId
-		rankInfo.Star = p.Star
-		res.Players = append(res.Players, rankInfo)
-	}
-
-	me := m.GetPlayer(s.Uid)
-	meRankInfo := new(RankInfo)
-	meRankInfo.Order = me.Order
-	meRankInfo.NickName = me.UserId
-	meRankInfo.Star = me.Star
-	res.Me = meRankInfo
-
-	// 给客户端回复数据
-	resBytes, err := json.Marshal(res)
-	if err != nil {
-		fmt.Println("生成json字符串错误")
-	}
-
-	fmt.Println(bytes.NewBuffer(resBytes).String())
-	// io.WriteString(w, "{\"a\" : 11}")
-	w.Write(resBytes)
+	log.Debug("RankHandler end ===================================")
 }
 
 // HeartHandler  心跳处理
 func HeartHandler(w http.ResponseWriter, req *http.Request) {
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	log.Debug("HeartHandler start ===================================")
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
 
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
-
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
+		log.Debug("HeartHandler request %v", str)
 
 		var s HeartRequest
 		json.Unmarshal([]byte(str), &s)
-		fmt.Println(s.Uid)
+		// fmt.Println(s.Uid)
 
 		m := db.GetInstance()
 		m.Heart(s.Uid)
-	}
 
-	res := new(HeartResponse)
-	res.Code = 200
-	// 给客户端回复数据
-	resBytes, err := json.Marshal(res)
-	if err != nil {
-		fmt.Println("生成json字符串错误")
-	}
+		res := new(HeartResponse)
+		res.Code = 200
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
 
-	fmt.Println(bytes.NewBuffer(resBytes).String())
-	// io.WriteString(w, "{\"a\" : 11}")
-	w.Write(resBytes)
+		log.Debug("HeartHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("HeartHandler end ===================================")
 }
 
 // LoginHandler  登录处理
 func LoginHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("LoginHandler start ===================================")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
 
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
-
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
+		log.Debug("LoginHandler request %v", bytes.NewBuffer(result).String())
+		// fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
 
 		var s LoginRequest
 		json.Unmarshal([]byte(str), &s)
-		fmt.Println(s.Uid + "  " + s.Name)
+		// fmt.Println(s.Uid + "  " + s.Name + "  " + s.Code)
 
-		m := db.GetInstance()
-		p := new(entry.Player)
-		p.UserId = s.Uid
-		p.Name = s.Name
-		p.LoginTime = time.Now()
-		m.SavePlayer(p)
+		url := "https://api.weixin.qq.com/sns/jscode2session?appid=" + config.WXAPPId + "&secret=" + config.WXSecretKey + "&js_code=" + s.Code + "&grant_type=authorization_code"
+		res, err := http.Get(url)
+		if err != nil {
+			log.Debug("LoginHandler  request err %v %v %v", url, res, err)
+		}
+		defer res.Body.Close()
+
+		// log.Debug("LoginHandler  request %v %v %v", url, res, err)
+
+		web, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			log.Debug("LoginHandler  request code2session err %v ", err)
+		} else {
+			var result WXCode2SessionResponse
+			if err := json.Unmarshal(web, &result); err != nil {
+				log.Debug("LoginHandler  request code2session err %v %v %v", url, res, err)
+			} else {
+				log.Debug("LoginHandler  request code2session result %v ", result)
+
+				m := db.GetInstance()
+				p := m.FindPlayerByOpenID(result.Openid)
+				if p == nil {
+					p = new(entry.Player)
+					p.UserId = tool.UniqueId()
+					p.OpenId = result.Openid
+					p.Name = s.Name
+					p.HeadUrl = s.HeadUrl
+					p.LoginTime = time.Now()
+					m.SavePlayer(p)
+				} else {
+					p.LoginTime = time.Now()
+					m.SavePlayer(p)
+				}
+
+				res := new(LoginResponse)
+				res.Code = 200
+				res.Result = true
+				res.Uid = p.UserId
+				// 给客户端回复数据
+				resBytes, err := json.Marshal(res)
+				if err != nil {
+					fmt.Println("生成json字符串错误")
+				}
+
+				log.Debug("LoginHandler response %v", bytes.NewBuffer(resBytes).String())
+				// io.WriteString(w, "{\"a\" : 11}")
+				w.Write(resBytes)
+			}
+		}
 	}
-
-	res := new(LoginResponse)
-	res.Code = 200
-	res.Result = true
-	// 给客户端回复数据
-	resBytes, err := json.Marshal(res)
-	if err != nil {
-		fmt.Println("生成json字符串错误")
-	}
-
-	fmt.Println(bytes.NewBuffer(resBytes).String())
-	// io.WriteString(w, "{\"a\" : 11}")
-	w.Write(resBytes)
+	log.Debug("LoginHandler end ===================================")
 }
 
 // LogoutHandler 登出处理
 func LogoutHandler(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	log.Debug("LogoutHandler start ===================================")
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
 
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
-
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
+		log.Debug("LogoutHandler request %v", str)
 
 		var s LogoutRequest
 		json.Unmarshal([]byte(str), &s)
@@ -418,35 +474,30 @@ func LogoutHandler(w http.ResponseWriter, req *http.Request) {
 		p.LogoutTime = time.Now()
 		m.SavePlayer(p)
 		m.SaveSnap(p)
-	}
 
-	res := new(LogoutResponse)
-	res.Code = 200
-	res.Result = true
-	// 给客户端回复数据
-	resBytes, err := json.Marshal(res)
-	if err != nil {
-		fmt.Println("生成json字符串错误")
+		res := new(LogoutResponse)
+		res.Code = 200
+		res.Result = true
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		log.Debug("LogoutHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
 	}
-	w.Write(resBytes)
+	log.Debug("LogoutHandler end ===================================")
 }
 
 // GetUserInfoHandler 获取用户信息处理
 func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("GetUserInfoHandler start ===================================")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
-
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
 
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -458,16 +509,16 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println("生成json字符串错误")
 		}
 		w.Write(resBytes)
+		log.Debug("GetUserInfoHandler end ===================================")
 	} else {
 		var str = bytes.NewBuffer(result).String()
+		log.Debug("GetUserInfoHandler request %v", str)
 
 		var s GetUserInfoRequest
 		json.Unmarshal([]byte(str), &s)
 
 		m := db.GetInstance()
 		player := m.GetPlayer(s.Uid)
-
-		log.Debug("GetUserInfoHandler  =====> %v   %v", s.Uid, player.Star)
 
 		res := new(GetUserInfoResponse)
 		res.Code = 200
@@ -496,26 +547,21 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println("生成json字符串错误")
 		}
 
+		log.Debug("GetUserInfoHandler response %v", bytes.NewBuffer(resBytes).String())
 		w.Write(resBytes)
+		log.Debug("GetUserInfoHandler end ===================================")
 	}
 }
 
 // GetClothHandler 获取衣服合成快照
 func GetClothHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("GetClothHandler start ===================================")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
-
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
 
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -528,8 +574,8 @@ func GetClothHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		w.Write(resBytes)
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
+		log.Debug("GetClothHandler request %v", str)
 
 		var s GetClothRequest
 		json.Unmarshal([]byte(str), &s)
@@ -539,8 +585,6 @@ func GetClothHandler(w http.ResponseWriter, req *http.Request) {
 		if len(clothSnap) == 0 {
 			clothSnap = "[]"
 		}
-
-		// log.Debug("GetClothHandler %v", clothSnap)
 
 		res := new(GetClothResponse)
 		res.Code = 200
@@ -552,26 +596,21 @@ func GetClothHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println("生成json字符串错误")
 		}
 
+		log.Debug("GetClothHandler response %v", bytes.NewBuffer(resBytes).String())
 		w.Write(resBytes)
 	}
+	log.Debug("GetClothHandler end ===================================")
 }
 
 // GetSignHandler 获取签到信息
 func GetSignHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("GetSignHandler start ===================================")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
-
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
 
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -584,12 +623,11 @@ func GetSignHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		w.Write(resBytes)
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
+		log.Debug("GetSignHandler request %v", str)
 
 		var s GetSignRequest
 		json.Unmarshal([]byte(str), &s)
-		fmt.Println(s.Uid)
 
 		m := db.GetInstance()
 		signDic := m.GetSign(s.Uid)
@@ -603,7 +641,6 @@ func GetSignHandler(w http.ResponseWriter, req *http.Request) {
 		j := 0
 		for i := days; i >= 0; i-- {
 			d := time.Now().AddDate(0, 0, -i).Format("2006/1/2")
-			log.Debug("dddddd  %v ", d)
 			if _, ok := signDic[d]; ok {
 				bools[j] = true
 			}
@@ -621,27 +658,21 @@ func GetSignHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println("生成json字符串错误")
 		}
 
-		fmt.Println(bytes.NewBuffer(resBytes).String())
+		log.Debug("GetSignHandler response %v", bytes.NewBuffer(resBytes).String())
 		w.Write(resBytes)
 	}
+	log.Debug("GetSignHandler end ===================================")
 }
 
 // SignHandler 签到处理
 func SignHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("SignHandler start ===================================")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
-
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
 
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -654,12 +685,11 @@ func SignHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		w.Write(resBytes)
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
+		log.Debug("SignHandler request %v", str)
 
 		var s SignRequest
 		json.Unmarshal([]byte(str), &s)
-		fmt.Println(s.Uid)
 
 		m := db.GetInstance()
 		m.Sign(s.Uid)
@@ -673,27 +703,21 @@ func SignHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println("生成json字符串错误")
 		}
 
-		fmt.Println(bytes.NewBuffer(resBytes).String())
+		log.Debug("SignHandler response %v", bytes.NewBuffer(resBytes).String())
 		w.Write(resBytes)
 	}
+	log.Debug("SignHandler end ===================================")
 }
 
 // ClothHandler 衣服快照
 func ClothHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("ClothHandler start ===================================")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
-
-	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
 
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -706,12 +730,11 @@ func ClothHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		w.Write(resBytes)
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
+		log.Debug("ClothHandler request %v", str)
 
 		var s ClothRequest
 		json.Unmarshal([]byte(str), &s)
-		fmt.Println(s.Uid + s.Snap)
 
 		m := db.GetInstance()
 		m.SaveCloth(s.Uid, s.Snap)
@@ -725,26 +748,23 @@ func ClothHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println("生成json字符串错误")
 		}
 
-		fmt.Println(bytes.NewBuffer(resBytes).String())
+		log.Debug("ClothHandler response %v", bytes.NewBuffer(resBytes).String())
 		w.Write(resBytes)
 	}
+	log.Debug("ClothHandler end ===================================")
 }
 
 // UserInfoHandler 用户信息
 func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
-	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
-	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
+	log.Debug("UserInfoHandler start ===================================")
+
+	setCrossHeader(w, req)
 
 	if req.Method != "POST" {
 		return
 	}
 
 	// 打印客户端头信息
-	fmt.Println(req.Method)
-	fmt.Println(req.Header)
-	fmt.Println(req.Body)
-	fmt.Println(req.URL)
 
 	result, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -757,12 +777,11 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		w.Write(resBytes)
 	} else {
-		fmt.Println(bytes.NewBuffer(result).String())
 		var str = bytes.NewBuffer(result).String()
+		log.Debug("UserInfoHandler request %v", str)
 
 		var s UserInfoRequest
 		json.Unmarshal([]byte(str), &s)
-		fmt.Println(s.Uid, "  ", s.Star, "  ", s.LvChao, "  ", len(s.Name), "  ", s.Diamond)
 
 		m := db.GetInstance()
 		player := new(entry.Player)
@@ -812,7 +831,15 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Println("生成json字符串错误")
 		}
 
-		fmt.Println(bytes.NewBuffer(resBytes).String())
+		log.Debug("UserInfoHandler response %v", bytes.NewBuffer(resBytes).String())
 		w.Write(resBytes)
 	}
+	log.Debug("UserInfoHandler end ===================================")
+}
+
+// setCrossHeader 设置跨域访问
+func setCrossHeader(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")                              //允许访问所有域
+	w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,content-type") //header的类型
+	w.Header().Set("content-type", "application/json")                              //返回数据格式是json
 }

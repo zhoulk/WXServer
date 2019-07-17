@@ -15,7 +15,7 @@ import (
 
 const (
 	// DBDriver 数据库地址
-	// DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
+	//DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
 	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
 )
 
@@ -32,10 +32,12 @@ func (m *Module) ConnectDB() {
 
 // PersistentData 数据库固化
 func (m *Module) PersistentData() {
+	log.Debug("persistent start ==================================== ")
 	m.PersistentUser()
 	m.PersistentSign()
 	m.PersistentCloth()
 	m.PersistentSnap()
+	log.Debug("persistent end ==================================== ")
 }
 
 // Rank 排序
@@ -56,6 +58,7 @@ func (m *Module) RankPlayer() {
 		p.UserId = baseInfo.Uid
 		p.Star = baseInfo.Star
 		p.Name = baseInfo.Name
+		p.HeadUrl = baseInfo.HeadUrl
 		if index < 100 {
 			m.rankPlayers = append(m.rankPlayers, p)
 		}
@@ -75,6 +78,7 @@ func (m *Module) PersistentUser() {
 			Uid:        player.UserId,
 			Account:    player.Account,
 			Password:   player.Password,
+			OpenId:     player.OpenId,
 			LoginTime:  player.LoginTime,
 			LogoutTime: player.LogoutTime,
 		}
@@ -90,6 +94,7 @@ func (m *Module) PersistentUser() {
 		userBaseInfo := UserBaseInfo{
 			Uid:     player.UserId,
 			Name:    player.Name,
+			HeadUrl: player.HeadUrl,
 			Star:    player.Star,
 			Exp:     player.Exp,
 			LvChao:  player.LvChao,
@@ -231,12 +236,12 @@ func (m *Module) CreateTables() {
 
 // LoadFromDB 加载数据
 func (m *Module) LoadFromDB() {
-	log.Debug("loading data from db start ...")
+	log.Debug("LoadFromDB start ==================================== ")
 	m.loadPlayer()
 	m.loadCloth()
 	m.loadSign()
 	m.loadSnap()
-	log.Debug("loading data from db end ...")
+	log.Debug("LoadFromDB end ==================================== ")
 }
 
 func (m *Module) loadPlayer() {
@@ -248,6 +253,7 @@ func (m *Module) loadPlayer() {
 		player.UserId = user.Uid
 		player.Account = user.Account
 		player.Password = user.Password
+		player.OpenId = user.OpenId
 		player.LoginTime = user.LoginTime
 		player.LogoutTime = user.LogoutTime
 		player.CreateTime = user.CreatedAt
@@ -261,8 +267,9 @@ func (m *Module) loadPlayer() {
 		if tempPlayers[baseInfo.Uid] == nil {
 			continue
 		}
-		// log.Debug("userbaseInfo ==== %v", baseInfo.Uid)
+		// log.Debug("userbaseInfo ==== %v %v %v", baseInfo.Uid, baseInfo.Name, baseInfo.HeadUrl)
 		tempPlayers[baseInfo.Uid].Name = baseInfo.Name
+		tempPlayers[baseInfo.Uid].HeadUrl = baseInfo.HeadUrl
 		tempPlayers[baseInfo.Uid].Star = baseInfo.Star
 		tempPlayers[baseInfo.Uid].Exp = baseInfo.Exp
 		tempPlayers[baseInfo.Uid].Diamond = baseInfo.Diamond
@@ -288,6 +295,10 @@ func (m *Module) loadPlayer() {
 	for _, player := range tempPlayers {
 		m.SavePlayer(player)
 	}
+
+	// for _, player := range m.players {
+	// 	log.Debug("userbaseInfo ==== %v %v %v", player.UserId, player.Name, player.HeadUrl)
+	// }
 
 	log.Debug("load players  db %v  mem %v", len(users), len(m.players))
 }

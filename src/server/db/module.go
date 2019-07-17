@@ -52,6 +52,9 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 		if len(s.Name) > 0 {
 			player.Name = s.Name
 		}
+		if len(s.HeadUrl) > 0 {
+			player.HeadUrl = s.HeadUrl
+		}
 		star := s.Star
 		if star == 0 {
 			star = 1
@@ -113,6 +116,17 @@ func (m *Module) SaveCloth(uid string, snap string) {
 // GetPlayer 获取用户信息
 func (m *Module) GetPlayer(uid string) *entry.Player {
 	return m.players[uid]
+}
+
+// FindPlayerByOpenID 根据openId查找
+func (m *Module) FindPlayerByOpenID(openID string) *entry.Player {
+	var res *entry.Player
+	for _, v := range m.players {
+		if v.OpenId == openID {
+			res = v
+		}
+	}
+	return res
 }
 
 // GetOffLineLvChao 获取离线绿钞
