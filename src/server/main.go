@@ -231,6 +231,7 @@ func main() {
 	m := db.GetInstance()
 	m.ConnectDB()
 	m.CreateTables()
+	m.InitializeConfigs()
 
 	m.LoadFromDB()
 	m.Rank()

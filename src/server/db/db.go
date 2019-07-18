@@ -40,6 +40,29 @@ func (m *Module) PersistentData() {
 	log.Debug("persistent end ==================================== ")
 }
 
+// InitializeConfigs  初始化
+func (m *Module) InitializeConfigs() {
+	m.InitializeClothConfig()
+}
+
+// InitializeClothConfig 初始化衣服配置
+func (m *Module) InitializeClothConfig() {
+
+	m.db.Unscoped().Where("1 = 1").Delete(&ConfigCloth{})
+
+	var configs = make([]*ConfigCloth, 0)
+	config1 := new(ConfigCloth)
+	config1.Name = "衣服1"
+	config1.Icon = "image1"
+	config1.Type = 1
+	config1.Level = 1
+	configs = append(configs, config1)
+
+	for _, config := range configs {
+		m.db.Create(&config)
+	}
+}
+
 // Rank 排序
 func (m *Module) Rank() {
 	m.RankPlayer()
@@ -230,6 +253,11 @@ func (m *Module) CreateTables() {
 	}
 	if !m.db.HasTable(&UserSnapInfo{}) {
 		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&UserSnapInfo{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&ConfigCloth{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigCloth{}).Error; err != nil {
 			panic(err)
 		}
 	}

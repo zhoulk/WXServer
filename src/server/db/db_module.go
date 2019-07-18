@@ -66,3 +66,14 @@ type UserSnapInfo struct {
 
 	gorm.Model
 }
+
+// ConfigCloth 衣服配置
+type ConfigCloth struct {
+	Name  string `gorm:"size:16"`
+	Icon  string `gorm:"size:256"`
+	Cost  string `gorm:"size:1024"`
+	Level int32
+	Type  int32
+
+	gorm.Model
+}
