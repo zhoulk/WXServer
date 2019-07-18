@@ -10,6 +10,7 @@ import (
 	"server/config"
 	"server/entry"
 	"server/tool"
+	"strings"
 	"time"
 
 	"github.com/name5566/leaf/log"
@@ -62,18 +63,19 @@ type GetUserInfoRequest struct {
 type GetUserInfoResponse struct {
 	Code int
 
-	Name    string
-	Star    int32
-	Exp     int32
-	LvChao  string
-	Diamond int32
-	Level   int32
-	Scene   int32
-	Hair    int32
-	Coat    int32
-	Trouser int32
-	Neck    int32
-	Shoe    int32
+	Name     string
+	Star     int32
+	Exp      int32
+	LvChao   string
+	Diamond  int32
+	Level    int32
+	Scene    int32
+	Hair     int32
+	Coat     int32
+	Trouser  int32
+	Neck     int32
+	Shoe     int32
+	MaxCloth int32
 
 	OffLineLvChao string
 }
@@ -150,6 +152,38 @@ type SignResponse struct {
 	Days []bool
 }
 
+// BuyRequest ..
+type BuyRequest struct {
+	Uid string
+
+	Type int32 // 1 钻石买绿钞
+	Num  int32
+}
+
+// BuyResponse ..
+type BuyResponse struct {
+	Code int
+
+	Diamond  int32
+	LvChao   string
+	MaxCloth int32
+}
+
+// SellRequest ..
+type SellRequest struct {
+	Uid string
+
+	Type   int32 // 1 卖衣服
+	Params string
+}
+
+// SellResponse ..
+type SellResponse struct {
+	Code int
+
+	LvChao string
+}
+
 // RankRequest ..
 type RankRequest struct {
 	Uid string
@@ -218,6 +252,8 @@ func main() {
 	http.HandleFunc("/getUserInfo", GetUserInfoHandler)
 	http.HandleFunc("/heart", HeartHandler)
 	http.HandleFunc("/rank", RankHandler)
+	http.HandleFunc("/buy", BuyHandler)
+	http.HandleFunc("/sell", SellHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -272,6 +308,104 @@ func GetWXAccessToken() {
 		log.Debug("GetWXAccessToken response %v ", result)
 	}
 	log.Debug("GetWXAccessToken end ==================================== ")
+}
+
+// BuyHandler  购买处理
+func BuyHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("BuyHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	result, err := ioutil.ReadAll(req.Body)
+	var s BuyRequest
+
+	if err != nil {
+		res := new(BuyResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		log.Debug("BuyHandler request %v", bytes.NewBuffer(result).String())
+
+		var str = bytes.NewBuffer(result).String()
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		m.Buy(s.Uid, s.Type, s.Num)
+		p := m.GetPlayer(s.Uid)
+
+		res := new(BuyResponse)
+		res.Code = 200
+		res.MaxCloth = p.MaxCloth
+		res.LvChao = p.LvChao
+		res.Diamond = p.Diamond
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("BuyHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("BuyHandler end ===================================")
+}
+
+// SellHandler  销售处理
+func SellHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("SellHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	result, err := ioutil.ReadAll(req.Body)
+	var s SellRequest
+
+	if err != nil {
+		res := new(SellResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		log.Debug("SellHandler request %v", bytes.NewBuffer(result).String())
+
+		var str = bytes.NewBuffer(result).String()
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		m.Sell(s.Uid, s.Type, s.Params)
+		p := m.GetPlayer(s.Uid)
+
+		res := new(SellResponse)
+		res.Code = 200
+		res.LvChao = p.LvChao
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("SellHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("SellHandler end ===================================")
 }
 
 // RankHandler  排行榜
@@ -420,10 +554,16 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 				p := m.FindPlayerByOpenID(result.Openid)
 				if p == nil {
 					p = new(entry.Player)
-					p.UserId = tool.UniqueId()
+					if strings.HasPrefix(s.Uid, "test") {
+						p.UserId = s.Uid
+					} else {
+						p.UserId = tool.UniqueId()
+					}
 					p.OpenId = result.Openid
 					p.Name = s.Name
 					p.HeadUrl = s.HeadUrl
+					p.Diamond = 100
+					p.MaxCloth = 12
 					p.LoginTime = time.Now()
 					m.SavePlayer(p)
 				} else {
@@ -538,6 +678,7 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		res.Trouser = player.Trouser
 		res.Neck = player.Neck
 		res.Shoe = player.Shoe
+		res.MaxCloth = player.MaxCloth
 
 		res.OffLineLvChao = m.GetOffLineLvChao(s.Uid)
 

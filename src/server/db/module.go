@@ -120,6 +120,9 @@ func (m *Module) GetPlayer(uid string) *entry.Player {
 
 // FindPlayerByOpenID 根据openId查找
 func (m *Module) FindPlayerByOpenID(openID string) *entry.Player {
+	if len(openID) == 0 {
+		return nil
+	}
 	var res *entry.Player
 	for _, v := range m.players {
 		if v.OpenId == openID {
@@ -207,6 +210,34 @@ func (m *Module) Heart(uid string) {
 		player.LogoutTime = time.Now()
 
 		m.SaveSnap(player)
+	}
+}
+
+// Buy 购买
+func (m *Module) Buy(uid string, t int32, num int32) {
+	if player, ok := m.players[uid]; ok {
+		if t == 1 {
+			player.BuyLvChao(num)
+		} else if t == 2 {
+			player.ExpendCloth(num)
+		}
+	}
+}
+
+// SellClothParams  ...
+type SellClothParams struct {
+	Type  int32
+	Level int32
+}
+
+// Sell 购买
+func (m *Module) Sell(uid string, t int32, params string) {
+	if player, ok := m.players[uid]; ok {
+		if t == 1 {
+			var s SellClothParams
+			json.Unmarshal([]byte(params), &s)
+			player.SellCloth(s.Type, s.Level)
+		}
 	}
 }
 

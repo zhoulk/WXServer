@@ -112,14 +112,15 @@ func (m *Module) PersistentUser() {
 		}
 
 		userExtendInfo := UserExtendInfo{
-			Uid:     player.UserId,
-			Level:   player.Level,
-			Scene:   player.Scene,
-			Hair:    player.Hair,
-			Coat:    player.Coat,
-			Trouser: player.Trouser,
-			Neck:    player.Neck,
-			Shoe:    player.Shoe,
+			Uid:      player.UserId,
+			Level:    player.Level,
+			Scene:    player.Scene,
+			Hair:     player.Hair,
+			Coat:     player.Coat,
+			Trouser:  player.Trouser,
+			Neck:     player.Neck,
+			Shoe:     player.Shoe,
+			MaxCloth: player.MaxCloth,
 		}
 
 		var oldExtendInfo UserExtendInfo
@@ -290,6 +291,7 @@ func (m *Module) loadPlayer() {
 		tempPlayers[extendInfo.Uid].Hair = extendInfo.Hair
 		tempPlayers[extendInfo.Uid].Neck = extendInfo.Neck
 		tempPlayers[extendInfo.Uid].Shoe = extendInfo.Shoe
+		tempPlayers[extendInfo.Uid].MaxCloth = extendInfo.MaxCloth
 	}
 
 	for _, player := range tempPlayers {

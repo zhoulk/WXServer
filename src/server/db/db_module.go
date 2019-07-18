@@ -30,14 +30,15 @@ type UserBaseInfo struct {
 }
 
 type UserExtendInfo struct {
-	Uid     string `gorm:"size:64;unique;not null"`
-	Level   int32
-	Scene   int32
-	Hair    int32
-	Coat    int32
-	Trouser int32
-	Neck    int32
-	Shoe    int32
+	Uid      string `gorm:"size:64;unique;not null"`
+	Level    int32
+	Scene    int32
+	Hair     int32
+	Coat     int32
+	Trouser  int32
+	Neck     int32
+	Shoe     int32
+	MaxCloth int32
 
 	gorm.Model
 }
