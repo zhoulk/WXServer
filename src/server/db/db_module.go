@@ -74,6 +74,27 @@ type ConfigCloth struct {
 	Cost  string `gorm:"size:1024"`
 	Level int32
 	Type  int32
+	Exp   int32
+
+	gorm.Model
+}
+
+// ConfigScene 场景配置
+type ConfigScene struct {
+	Name  string `gorm:"size:16"`
+	Icon  string `gorm:"size:256"`
+	Level int32
+	Star  int32
+
+	gorm.Model
+}
+
+// ConfigLevel 场景配置
+type ConfigLevel struct {
+	Name  string `gorm:"size:16"`
+	Icon  string `gorm:"size:256"`
+	Level int32
+	Star  int32
 
 	gorm.Model
 }

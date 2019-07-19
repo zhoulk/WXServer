@@ -15,11 +15,13 @@ import (
 
 // Module ...
 type Module struct {
-	players     map[string]*entry.Player
-	signs       map[string]map[string]time.Time
-	cloths      map[string]string
-	snaps       map[string]*entry.Snap
-	rankPlayers []*entry.Player
+	players      map[string]*entry.Player
+	signs        map[string]map[string]time.Time
+	cloths       map[string]string
+	snaps        map[string]*entry.Snap
+	rankPlayers  []*entry.Player
+	clothConfigs []*entry.ConfigCloth
+	sceneConfigs []*entry.ConfigScene
 
 	db *gorm.DB
 }
@@ -41,6 +43,7 @@ func init() {
 	GetInstance().cloths = make(map[string]string)
 	GetInstance().snaps = make(map[string]*entry.Snap)
 	GetInstance().rankPlayers = make([]*entry.Player, 0)
+	GetInstance().clothConfigs = make([]*entry.ConfigCloth, 0)
 }
 
 // SavePlayer 保存用户信息
@@ -236,7 +239,8 @@ func (m *Module) Sell(uid string, t int32, params string) {
 		if t == 1 {
 			var s SellClothParams
 			json.Unmarshal([]byte(params), &s)
-			player.SellCloth(s.Type, s.Level)
+			cost := m.CostOfCloth(s.Type, s.Level)
+			player.SellCloth(s.Type, s.Level, cost)
 		}
 	}
 }

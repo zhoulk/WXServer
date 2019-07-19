@@ -88,12 +88,14 @@ func (p *Player) ExpendCloth(num int32) {
 }
 
 // SellCloth  出售衣服
-func (p *Player) SellCloth(t int32, level int32) {
+func (p *Player) SellCloth(t int32, level int32, cost string) {
 	var s []int32
 	json.Unmarshal([]byte(p.LvChao), &s)
 
 	otherNum := new(tool.BigNumber)
-	otherNum.Raw(5000000)
+	var otherArr []int32
+	json.Unmarshal([]byte(cost), &otherArr)
+	otherNum.FromArr(otherArr)
 
 	// log.Debug("%v", otherNum)
 

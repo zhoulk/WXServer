@@ -152,6 +152,20 @@ type SignResponse struct {
 	Days []bool
 }
 
+// GetConfigRequest ..
+type GetConfigRequest struct {
+	Uid string
+
+	Type int32 // 1 衣服   2 场景   3 咔位   4 签到
+}
+
+// GetConfigResponse ..
+type GetConfigResponse struct {
+	Code int
+
+	Config string
+}
+
 // BuyRequest ..
 type BuyRequest struct {
 	Uid string
@@ -255,6 +269,7 @@ func main() {
 	http.HandleFunc("/rank", RankHandler)
 	http.HandleFunc("/buy", BuyHandler)
 	http.HandleFunc("/sell", SellHandler)
+	http.HandleFunc("/getConfig", GetConfigHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -359,6 +374,53 @@ func BuyHandler(w http.ResponseWriter, req *http.Request) {
 		w.Write(resBytes)
 	}
 	log.Debug("BuyHandler end ===================================")
+}
+
+// GetConfigHandler  获取配置
+func GetConfigHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("GetConfigHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	result, err := ioutil.ReadAll(req.Body)
+	var s GetConfigRequest
+
+	if err != nil {
+		res := new(GetConfigResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		log.Debug("GetConfigHandler request %v", bytes.NewBuffer(result).String())
+
+		var str = bytes.NewBuffer(result).String()
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		configStr := m.GetConfigStr(s.Type)
+
+		res := new(GetConfigResponse)
+		res.Code = 200
+		res.Config = configStr
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("GetConfigHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("GetConfigHandler end ===================================")
 }
 
 // SellHandler  销售处理

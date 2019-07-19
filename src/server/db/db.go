@@ -40,29 +40,6 @@ func (m *Module) PersistentData() {
 	log.Debug("persistent end ==================================== ")
 }
 
-// InitializeConfigs  初始化
-func (m *Module) InitializeConfigs() {
-	m.InitializeClothConfig()
-}
-
-// InitializeClothConfig 初始化衣服配置
-func (m *Module) InitializeClothConfig() {
-
-	m.db.Unscoped().Where("1 = 1").Delete(&ConfigCloth{})
-
-	var configs = make([]*ConfigCloth, 0)
-	config1 := new(ConfigCloth)
-	config1.Name = "衣服1"
-	config1.Icon = "image1"
-	config1.Type = 1
-	config1.Level = 1
-	configs = append(configs, config1)
-
-	for _, config := range configs {
-		m.db.Create(&config)
-	}
-}
-
 // Rank 排序
 func (m *Module) Rank() {
 	m.RankPlayer()
@@ -261,6 +238,16 @@ func (m *Module) CreateTables() {
 			panic(err)
 		}
 	}
+	if !m.db.HasTable(&ConfigScene{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigScene{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&ConfigLevel{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigLevel{}).Error; err != nil {
+			panic(err)
+		}
+	}
 }
 
 // LoadFromDB 加载数据
@@ -270,6 +257,8 @@ func (m *Module) LoadFromDB() {
 	m.loadCloth()
 	m.loadSign()
 	m.loadSnap()
+	m.loadClothConfigs()
+	m.loadSceneConfigs()
 	log.Debug("LoadFromDB end ==================================== ")
 }
 
@@ -385,4 +374,40 @@ func (m *Module) loadSnap() {
 	// }
 
 	log.Debug("Load Snaps  db %v  mem %v", len(snapInfos), len(m.snaps))
+}
+
+func (m *Module) loadClothConfigs() {
+	var clothConfigs []*ConfigCloth
+	m.db.Find(&clothConfigs)
+
+	m.clothConfigs = m.clothConfigs[0:0]
+	for _, config := range clothConfigs {
+		cloth := new(entry.ConfigCloth)
+		cloth.Name = config.Name
+		cloth.Icon = config.Icon
+		cloth.Type = config.Type
+		cloth.Level = config.Level
+		cloth.Exp = config.Exp
+		cloth.Cost = config.Cost
+		m.clothConfigs = append(m.clothConfigs, cloth)
+	}
+
+	log.Debug("Load ClothConfigs  db %v  mem %v", len(clothConfigs), len(m.clothConfigs))
+}
+
+func (m *Module) loadSceneConfigs() {
+	var sceneConfigs []*ConfigScene
+	m.db.Find(&sceneConfigs)
+
+	m.sceneConfigs = m.sceneConfigs[0:0]
+	for _, config := range sceneConfigs {
+		cloth := new(entry.ConfigScene)
+		cloth.Name = config.Name
+		cloth.Icon = config.Icon
+		cloth.Level = config.Level
+		cloth.Star = config.Star
+		m.sceneConfigs = append(m.sceneConfigs, cloth)
+	}
+
+	log.Debug("Load SceneConfigs  db %v  mem %v", len(sceneConfigs), len(m.sceneConfigs))
 }
