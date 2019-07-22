@@ -248,6 +248,11 @@ func (m *Module) CreateTables() {
 			panic(err)
 		}
 	}
+	if !m.db.HasTable(&ConfigSign{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigSign{}).Error; err != nil {
+			panic(err)
+		}
+	}
 }
 
 // LoadFromDB 加载数据
@@ -259,6 +264,8 @@ func (m *Module) LoadFromDB() {
 	m.loadSnap()
 	m.loadClothConfigs()
 	m.loadSceneConfigs()
+	m.loadLevelConfigs()
+	m.loadSignConfigs()
 	log.Debug("LoadFromDB end ==================================== ")
 }
 
@@ -402,6 +409,7 @@ func (m *Module) loadSceneConfigs() {
 	m.sceneConfigs = m.sceneConfigs[0:0]
 	for _, config := range sceneConfigs {
 		cloth := new(entry.ConfigScene)
+		cloth.Id = config.No
 		cloth.Name = config.Name
 		cloth.Icon = config.Icon
 		cloth.Level = config.Level
@@ -410,4 +418,38 @@ func (m *Module) loadSceneConfigs() {
 	}
 
 	log.Debug("Load SceneConfigs  db %v  mem %v", len(sceneConfigs), len(m.sceneConfigs))
+}
+
+func (m *Module) loadLevelConfigs() {
+	var levelConfigs []*ConfigLevel
+	m.db.Find(&levelConfigs)
+
+	m.levelConfigs = m.levelConfigs[0:0]
+	for _, config := range levelConfigs {
+		cloth := new(entry.ConfigLevel)
+		cloth.Id = config.No
+		cloth.Name = config.Name
+		cloth.Icon = config.Icon
+		cloth.Level = config.Level
+		cloth.Star = config.Star
+		m.levelConfigs = append(m.levelConfigs, cloth)
+	}
+
+	log.Debug("Load LevelConfigs  db %v  mem %v", len(levelConfigs), len(m.levelConfigs))
+}
+
+func (m *Module) loadSignConfigs() {
+	var signConfigs []*ConfigSign
+	m.db.Find(&signConfigs)
+
+	m.signConfigs = m.signConfigs[0:0]
+	for _, config := range signConfigs {
+		cloth := new(entry.ConfigSign)
+		cloth.Id = config.No
+		cloth.Day = config.Day
+		cloth.Num = config.Num
+		m.signConfigs = append(m.signConfigs, cloth)
+	}
+
+	log.Debug("Load SignConfigs  db %v  mem %v", len(signConfigs), len(m.signConfigs))
 }

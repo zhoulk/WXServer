@@ -12,6 +12,7 @@ type ConfigCloth struct {
 
 // ConfigScene  ...
 type ConfigScene struct {
+	Id    int32
 	Name  string
 	Icon  string
 	Level int32
@@ -20,8 +21,16 @@ type ConfigScene struct {
 
 // ConfigLevel  ...
 type ConfigLevel struct {
+	Id    int32
 	Name  string
 	Icon  string
 	Level int32
 	Star  int32
+}
+
+// ConfigSign  ...
+type ConfigSign struct {
+	Id  int32
+	Day int32
+	Num int32
 }

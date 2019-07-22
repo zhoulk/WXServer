@@ -22,6 +22,8 @@ type Module struct {
 	rankPlayers  []*entry.Player
 	clothConfigs []*entry.ConfigCloth
 	sceneConfigs []*entry.ConfigScene
+	levelConfigs []*entry.ConfigLevel
+	signConfigs  []*entry.ConfigSign
 
 	db *gorm.DB
 }
@@ -44,6 +46,10 @@ func init() {
 	GetInstance().snaps = make(map[string]*entry.Snap)
 	GetInstance().rankPlayers = make([]*entry.Player, 0)
 	GetInstance().clothConfigs = make([]*entry.ConfigCloth, 0)
+	GetInstance().sceneConfigs = make([]*entry.ConfigScene, 0)
+	GetInstance().levelConfigs = make([]*entry.ConfigLevel, 0)
+	GetInstance().signConfigs = make([]*entry.ConfigSign, 0)
+
 }
 
 // SavePlayer 保存用户信息

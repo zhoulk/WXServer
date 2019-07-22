@@ -81,6 +81,7 @@ type ConfigCloth struct {
 
 // ConfigScene 场景配置
 type ConfigScene struct {
+	No    int32
 	Name  string `gorm:"size:16"`
 	Icon  string `gorm:"size:256"`
 	Level int32
@@ -89,12 +90,22 @@ type ConfigScene struct {
 	gorm.Model
 }
 
-// ConfigLevel 场景配置
+// ConfigLevel 咔位配置
 type ConfigLevel struct {
+	No    int32
 	Name  string `gorm:"size:16"`
 	Icon  string `gorm:"size:256"`
 	Level int32
 	Star  int32
+
+	gorm.Model
+}
+
+// ConfigSign 签到配置
+type ConfigSign struct {
+	No  int32
+	Day int32
+	Num int32
 
 	gorm.Model
 }
