@@ -15,11 +15,15 @@ import (
 
 // Module ...
 type Module struct {
-	players     map[string]*entry.Player
-	signs       map[string]map[string]time.Time
-	cloths      map[string]string
-	snaps       map[string]*entry.Snap
-	rankPlayers []*entry.Player
+	players      map[string]*entry.Player
+	signs        map[string]map[string]time.Time
+	cloths       map[string]string
+	snaps        map[string]*entry.Snap
+	rankPlayers  []*entry.Player
+	clothConfigs []*entry.ConfigCloth
+	sceneConfigs []*entry.ConfigScene
+	levelConfigs []*entry.ConfigLevel
+	signConfigs  []*entry.ConfigSign
 
 	db *gorm.DB
 }
@@ -41,6 +45,11 @@ func init() {
 	GetInstance().cloths = make(map[string]string)
 	GetInstance().snaps = make(map[string]*entry.Snap)
 	GetInstance().rankPlayers = make([]*entry.Player, 0)
+	GetInstance().clothConfigs = make([]*entry.ConfigCloth, 0)
+	GetInstance().sceneConfigs = make([]*entry.ConfigScene, 0)
+	GetInstance().levelConfigs = make([]*entry.ConfigLevel, 0)
+	GetInstance().signConfigs = make([]*entry.ConfigSign, 0)
+
 }
 
 // SavePlayer 保存用户信息
@@ -51,6 +60,9 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 	if player, ok := m.players[s.UserId]; ok {
 		if len(s.Name) > 0 {
 			player.Name = s.Name
+		}
+		if len(s.HeadUrl) > 0 {
+			player.HeadUrl = s.HeadUrl
 		}
 		star := s.Star
 		if star == 0 {
@@ -113,6 +125,20 @@ func (m *Module) SaveCloth(uid string, snap string) {
 // GetPlayer 获取用户信息
 func (m *Module) GetPlayer(uid string) *entry.Player {
 	return m.players[uid]
+}
+
+// FindPlayerByOpenID 根据openId查找
+func (m *Module) FindPlayerByOpenID(openID string) *entry.Player {
+	if len(openID) == 0 {
+		return nil
+	}
+	var res *entry.Player
+	for _, v := range m.players {
+		if v.OpenId == openID {
+			res = v
+		}
+	}
+	return res
 }
 
 // GetOffLineLvChao 获取离线绿钞
@@ -193,6 +219,35 @@ func (m *Module) Heart(uid string) {
 		player.LogoutTime = time.Now()
 
 		m.SaveSnap(player)
+	}
+}
+
+// Buy 购买
+func (m *Module) Buy(uid string, t int32, num int32) {
+	if player, ok := m.players[uid]; ok {
+		if t == 1 {
+			player.BuyLvChao(num)
+		} else if t == 2 {
+			player.ExpendCloth(num)
+		}
+	}
+}
+
+// SellClothParams  ...
+type SellClothParams struct {
+	Type  int32
+	Level int32
+}
+
+// Sell 购买
+func (m *Module) Sell(uid string, t int32, params string) {
+	if player, ok := m.players[uid]; ok {
+		if t == 1 {
+			var s SellClothParams
+			json.Unmarshal([]byte(params), &s)
+			cost := m.CostOfCloth(s.Type, s.Level)
+			player.SellCloth(s.Type, s.Level, cost)
+		}
 	}
 }
 

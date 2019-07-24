@@ -15,8 +15,9 @@ import (
 
 const (
 	// DBDriver 数据库地址
-	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
-	// DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
+
+	//DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
+	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
 )
 
 // ConnectDB 连接数据库
@@ -32,10 +33,12 @@ func (m *Module) ConnectDB() {
 
 // PersistentData 数据库固化
 func (m *Module) PersistentData() {
+	log.Debug("persistent start ==================================== ")
 	m.PersistentUser()
 	m.PersistentSign()
 	m.PersistentCloth()
 	m.PersistentSnap()
+	log.Debug("persistent end ==================================== ")
 }
 
 // Rank 排序
@@ -56,6 +59,7 @@ func (m *Module) RankPlayer() {
 		p.UserId = baseInfo.Uid
 		p.Star = baseInfo.Star
 		p.Name = baseInfo.Name
+		p.HeadUrl = baseInfo.HeadUrl
 		if index < 100 {
 			m.rankPlayers = append(m.rankPlayers, p)
 		}
@@ -75,6 +79,7 @@ func (m *Module) PersistentUser() {
 			Uid:        player.UserId,
 			Account:    player.Account,
 			Password:   player.Password,
+			OpenId:     player.OpenId,
 			LoginTime:  player.LoginTime,
 			LogoutTime: player.LogoutTime,
 		}
@@ -90,6 +95,7 @@ func (m *Module) PersistentUser() {
 		userBaseInfo := UserBaseInfo{
 			Uid:     player.UserId,
 			Name:    player.Name,
+			HeadUrl: player.HeadUrl,
 			Star:    player.Star,
 			Exp:     player.Exp,
 			LvChao:  player.LvChao,
@@ -107,14 +113,15 @@ func (m *Module) PersistentUser() {
 		}
 
 		userExtendInfo := UserExtendInfo{
-			Uid:     player.UserId,
-			Level:   player.Level,
-			Scene:   player.Scene,
-			Hair:    player.Hair,
-			Coat:    player.Coat,
-			Trouser: player.Trouser,
-			Neck:    player.Neck,
-			Shoe:    player.Shoe,
+			Uid:      player.UserId,
+			Level:    player.Level,
+			Scene:    player.Scene,
+			Hair:     player.Hair,
+			Coat:     player.Coat,
+			Trouser:  player.Trouser,
+			Neck:     player.Neck,
+			Shoe:     player.Shoe,
+			MaxCloth: player.MaxCloth,
 		}
 
 		var oldExtendInfo UserExtendInfo
@@ -227,16 +234,40 @@ func (m *Module) CreateTables() {
 			panic(err)
 		}
 	}
+	if !m.db.HasTable(&ConfigCloth{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigCloth{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&ConfigScene{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigScene{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&ConfigLevel{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigLevel{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&ConfigSign{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigSign{}).Error; err != nil {
+			panic(err)
+		}
+	}
 }
 
 // LoadFromDB 加载数据
 func (m *Module) LoadFromDB() {
-	log.Debug("loading data from db start ...")
+	log.Debug("LoadFromDB start ==================================== ")
 	m.loadPlayer()
 	m.loadCloth()
 	m.loadSign()
 	m.loadSnap()
-	log.Debug("loading data from db end ...")
+	m.loadClothConfigs()
+	m.loadSceneConfigs()
+	m.loadLevelConfigs()
+	m.loadSignConfigs()
+	log.Debug("LoadFromDB end ==================================== ")
 }
 
 func (m *Module) loadPlayer() {
@@ -248,6 +279,7 @@ func (m *Module) loadPlayer() {
 		player.UserId = user.Uid
 		player.Account = user.Account
 		player.Password = user.Password
+		player.OpenId = user.OpenId
 		player.LoginTime = user.LoginTime
 		player.LogoutTime = user.LogoutTime
 		player.CreateTime = user.CreatedAt
@@ -261,8 +293,9 @@ func (m *Module) loadPlayer() {
 		if tempPlayers[baseInfo.Uid] == nil {
 			continue
 		}
-		// log.Debug("userbaseInfo ==== %v", baseInfo.Uid)
+		// log.Debug("userbaseInfo ==== %v %v %v", baseInfo.Uid, baseInfo.Name, baseInfo.HeadUrl)
 		tempPlayers[baseInfo.Uid].Name = baseInfo.Name
+		tempPlayers[baseInfo.Uid].HeadUrl = baseInfo.HeadUrl
 		tempPlayers[baseInfo.Uid].Star = baseInfo.Star
 		tempPlayers[baseInfo.Uid].Exp = baseInfo.Exp
 		tempPlayers[baseInfo.Uid].Diamond = baseInfo.Diamond
@@ -283,11 +316,16 @@ func (m *Module) loadPlayer() {
 		tempPlayers[extendInfo.Uid].Hair = extendInfo.Hair
 		tempPlayers[extendInfo.Uid].Neck = extendInfo.Neck
 		tempPlayers[extendInfo.Uid].Shoe = extendInfo.Shoe
+		tempPlayers[extendInfo.Uid].MaxCloth = extendInfo.MaxCloth
 	}
 
 	for _, player := range tempPlayers {
 		m.SavePlayer(player)
 	}
+
+	// for _, player := range m.players {
+	// 	log.Debug("userbaseInfo ==== %v %v %v", player.UserId, player.Name, player.HeadUrl)
+	// }
 
 	log.Debug("load players  db %v  mem %v", len(users), len(m.players))
 }
@@ -344,4 +382,75 @@ func (m *Module) loadSnap() {
 	// }
 
 	log.Debug("Load Snaps  db %v  mem %v", len(snapInfos), len(m.snaps))
+}
+
+func (m *Module) loadClothConfigs() {
+	var clothConfigs []*ConfigCloth
+	m.db.Find(&clothConfigs)
+
+	m.clothConfigs = m.clothConfigs[0:0]
+	for _, config := range clothConfigs {
+		cloth := new(entry.ConfigCloth)
+		cloth.Name = config.Name
+		cloth.Icon = config.Icon
+		cloth.Type = config.Type
+		cloth.Level = config.Level
+		cloth.Exp = config.Exp
+		cloth.Cost = config.Cost
+		m.clothConfigs = append(m.clothConfigs, cloth)
+	}
+
+	log.Debug("Load ClothConfigs  db %v  mem %v", len(clothConfigs), len(m.clothConfigs))
+}
+
+func (m *Module) loadSceneConfigs() {
+	var sceneConfigs []*ConfigScene
+	m.db.Find(&sceneConfigs)
+
+	m.sceneConfigs = m.sceneConfigs[0:0]
+	for _, config := range sceneConfigs {
+		cloth := new(entry.ConfigScene)
+		cloth.Id = config.No
+		cloth.Name = config.Name
+		cloth.Icon = config.Icon
+		cloth.Level = config.Level
+		cloth.Star = config.Star
+		m.sceneConfigs = append(m.sceneConfigs, cloth)
+	}
+
+	log.Debug("Load SceneConfigs  db %v  mem %v", len(sceneConfigs), len(m.sceneConfigs))
+}
+
+func (m *Module) loadLevelConfigs() {
+	var levelConfigs []*ConfigLevel
+	m.db.Find(&levelConfigs)
+
+	m.levelConfigs = m.levelConfigs[0:0]
+	for _, config := range levelConfigs {
+		cloth := new(entry.ConfigLevel)
+		cloth.Id = config.No
+		cloth.Name = config.Name
+		cloth.Icon = config.Icon
+		cloth.Level = config.Level
+		cloth.Star = config.Star
+		m.levelConfigs = append(m.levelConfigs, cloth)
+	}
+
+	log.Debug("Load LevelConfigs  db %v  mem %v", len(levelConfigs), len(m.levelConfigs))
+}
+
+func (m *Module) loadSignConfigs() {
+	var signConfigs []*ConfigSign
+	m.db.Find(&signConfigs)
+
+	m.signConfigs = m.signConfigs[0:0]
+	for _, config := range signConfigs {
+		cloth := new(entry.ConfigSign)
+		cloth.Id = config.No
+		cloth.Day = config.Day
+		cloth.Num = config.Num
+		m.signConfigs = append(m.signConfigs, cloth)
+	}
+
+	log.Debug("Load SignConfigs  db %v  mem %v", len(signConfigs), len(m.signConfigs))
 }
