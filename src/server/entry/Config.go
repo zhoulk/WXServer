@@ -2,12 +2,14 @@ package entry
 
 // ConfigCloth  ...
 type ConfigCloth struct {
+	Id    int32
 	Name  string
 	Icon  string
 	Cost  string
 	Level int32
 	Type  int32
 	Exp   int32
+	Star  int32
 }
 
 // ConfigScene  ...

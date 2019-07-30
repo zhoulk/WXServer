@@ -16,8 +16,8 @@ import (
 const (
 	// DBDriver 数据库地址
 
-	//DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
-	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
+	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
+	//DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
 )
 
 // ConnectDB 连接数据库
@@ -391,12 +391,14 @@ func (m *Module) loadClothConfigs() {
 	m.clothConfigs = m.clothConfigs[0:0]
 	for _, config := range clothConfigs {
 		cloth := new(entry.ConfigCloth)
+		cloth.Id = config.No
 		cloth.Name = config.Name
 		cloth.Icon = config.Icon
 		cloth.Type = config.Type
 		cloth.Level = config.Level
 		cloth.Exp = config.Exp
 		cloth.Cost = config.Cost
+		cloth.Star = config.Star
 		m.clothConfigs = append(m.clothConfigs, cloth)
 	}
 
