@@ -1,2 +1,12 @@
 
 *.zip
+src/github.com/derekparker/delve
+src/github.com/go-sql-driver/mysql
+src/github.com/golang/protobuf
+src/github.com/jinzhu/gorm
+src/github.com/lukehoban/go-find-references
+src/github.com/nsf/gocode
+src/github.com/stamblerre/gocode
+*.v2
+src/golang.org/x/tools
+src/github.com/stamblerre/gocode
