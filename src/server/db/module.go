@@ -95,6 +95,9 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 		if s.Neck > 0 {
 			player.Neck = s.Neck
 		}
+		if s.Shoe > 0 {
+			player.Shoe = s.Shoe
+		}
 	} else {
 		m.players[s.UserId] = s
 	}

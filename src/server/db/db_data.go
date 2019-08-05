@@ -61,15 +61,15 @@ func (m *Module) InitializeSceneConfig() {
 	m.db.Unscoped().Delete(&ConfigScene{})
 
 	var configs = []string{
-		"{\"no\" : 1, \"name\" : \"场景1\", \"icon\" : \"\", \"star\" : 10, \"level\" : 1}",
-		"{\"no\" : 2, \"name\" : \"场景2\", \"icon\" : \"\", \"star\" : 20, \"level\" : 2}",
-		"{\"no\" : 3, \"name\" : \"场景3\", \"icon\" : \"\", \"star\" : 30, \"level\" : 3}",
-		"{\"no\" : 4, \"name\" : \"场景4\", \"icon\" : \"\", \"star\" : 40, \"level\" : 4}",
-		"{\"no\" : 5, \"name\" : \"场景5\", \"icon\" : \"\", \"star\" : 50, \"level\" : 5}",
-		"{\"no\" : 6, \"name\" : \"场景6\", \"icon\" : \"\", \"star\" : 60, \"level\" : 6}",
-		"{\"no\" : 7, \"name\" : \"场景7\", \"icon\" : \"\", \"star\" : 70, \"level\" : 7}",
-		"{\"no\" : 8, \"name\" : \"场景8\", \"icon\" : \"\", \"star\" : 80, \"level\" : 8}",
-		"{\"no\" : 9, \"name\" : \"场景9\", \"icon\" : \"\", \"star\" : 90, \"level\" : 9}",
+		"{\"no\" : 1, \"name\" : \"场景1\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/1.jpg\", \"star\" : 10, \"level\" : 1}",
+		"{\"no\" : 2, \"name\" : \"场景2\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/2.jpg\", \"star\" : 20, \"level\" : 2}",
+		"{\"no\" : 3, \"name\" : \"场景3\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/3.jpg\", \"star\" : 30, \"level\" : 3}",
+		"{\"no\" : 4, \"name\" : \"场景4\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/4.jpg\", \"star\" : 40, \"level\" : 4}",
+		"{\"no\" : 5, \"name\" : \"场景5\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/5.jpg\", \"star\" : 50, \"level\" : 5}",
+		"{\"no\" : 6, \"name\" : \"场景6\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/6.jpg\", \"star\" : 60, \"level\" : 6}",
+		"{\"no\" : 7, \"name\" : \"场景7\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/7.jpg\", \"star\" : 70, \"level\" : 7}",
+		"{\"no\" : 8, \"name\" : \"场景8\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/8.jpg\", \"star\" : 80, \"level\" : 8}",
+		"{\"no\" : 9, \"name\" : \"场景9\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/scene/9.jpg\", \"star\" : 90, \"level\" : 9}",
 	}
 
 	for _, configStr := range configs {
