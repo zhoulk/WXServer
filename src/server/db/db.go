@@ -16,8 +16,8 @@ import (
 const (
 	// DBDriver 数据库地址
 
-	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
-	//DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
+	//DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
+	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
 )
 
 // ConnectDB 连接数据库
@@ -251,6 +251,16 @@ func (m *Module) CreateTables() {
 	}
 	if !m.db.HasTable(&ConfigSign{}) {
 		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigSign{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&FavourLog{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&FavourLog{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&FavourReport{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&FavourReport{}).Error; err != nil {
 			panic(err)
 		}
 	}

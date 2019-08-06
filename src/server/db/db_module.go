@@ -111,3 +111,22 @@ type ConfigSign struct {
 
 	gorm.Model
 }
+
+// FavourLog 点赞日志
+type FavourLog struct {
+	From string `gorm:"size:64"`
+	To   string `gorm:"size:64"`
+	Num  int32
+	Day  string
+
+	gorm.Model
+}
+
+// FavourReport 点赞统计
+type FavourReport struct {
+	From string `gorm:"size:64"`
+	To   string `gorm:"size:64"`
+	Num  int32
+
+	gorm.Model
+}
