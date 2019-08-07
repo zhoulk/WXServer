@@ -15,15 +15,18 @@ import (
 
 // Module ...
 type Module struct {
-	players      map[string]*entry.Player
-	signs        map[string]map[string]time.Time
-	cloths       map[string]string
-	snaps        map[string]*entry.Snap
-	rankPlayers  []*entry.Player
-	clothConfigs []*entry.ConfigCloth
-	sceneConfigs []*entry.ConfigScene
-	levelConfigs []*entry.ConfigLevel
-	signConfigs  []*entry.ConfigSign
+	players          map[string]*entry.Player
+	signs            map[string]map[string]time.Time
+	cloths           map[string]string
+	snaps            map[string]*entry.Snap
+	rankPlayers      []*entry.Player
+	clothConfigs     []*entry.ConfigCloth
+	sceneConfigs     []*entry.ConfigScene
+	levelConfigs     []*entry.ConfigLevel
+	signConfigs      []*entry.ConfigSign
+	favourLogs       []*entry.FavourLog
+	favourFlag       map[string]bool
+	favourReportLogs map[string]*entry.FavourReport
 
 	db *gorm.DB
 }
@@ -49,6 +52,9 @@ func init() {
 	GetInstance().sceneConfigs = make([]*entry.ConfigScene, 0)
 	GetInstance().levelConfigs = make([]*entry.ConfigLevel, 0)
 	GetInstance().signConfigs = make([]*entry.ConfigSign, 0)
+	GetInstance().favourLogs = make([]*entry.FavourLog, 0)
+	GetInstance().favourFlag = make(map[string]bool)
+	GetInstance().favourReportLogs = make(map[string]*entry.FavourReport)
 
 }
 
@@ -212,7 +218,20 @@ func (m *Module) GetSign(uid string) map[string]time.Time {
 }
 
 // GetRank 获取排行榜
-func (m *Module) GetRank() []*entry.Player {
+func (m *Module) GetRank(uid string) []*entry.Player {
+
+	day := time.Now().Format("2006/1/2")
+	for _, p := range m.rankPlayers {
+		if flag, ok := m.favourFlag[uid+p.UserId+day]; ok {
+			if flag {
+				p.HasFavour = true
+			}
+		}
+		if report, ok := m.favourReportLogs["all"+p.UserId]; ok {
+			p.Favour = report.Num
+		}
+	}
+
 	return m.rankPlayers
 }
 
@@ -251,6 +270,40 @@ func (m *Module) Sell(uid string, t int32, params string) {
 			cost := m.CostOfCloth(s.Type, s.Level)
 			player.SellCloth(s.Type, s.Level, cost)
 		}
+	}
+}
+
+// Favour 点赞
+func (m *Module) Favour(uid string, toUID string, num int32) {
+	l := new(entry.FavourLog)
+	l.Uid = uid
+	l.ToUID = toUID
+	l.Day = time.Now().Format("2006/1/2")
+	l.Num = num
+	m.favourLogs = append(m.favourLogs, l)
+
+	m.favourFlag[l.Uid+l.ToUID+l.Day] = true
+
+	if report, ok := m.favourReportLogs[uid+toUID]; ok {
+		report.Num = report.Num + 1
+		m.favourReportLogs[uid+toUID] = report
+	} else {
+		report := new(entry.FavourReport)
+		report.From = uid
+		report.To = toUID
+		report.Num = 1
+		m.favourReportLogs[uid+toUID] = report
+	}
+
+	if report, ok := m.favourReportLogs["all"+toUID]; ok {
+		report.Num = report.Num + 1
+		m.favourReportLogs["all"+toUID] = report
+	} else {
+		report := new(entry.FavourReport)
+		report.From = "all"
+		report.To = toUID
+		report.Num = 1
+		m.favourReportLogs["all"+toUID] = report
 	}
 }
 

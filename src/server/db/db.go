@@ -38,6 +38,7 @@ func (m *Module) PersistentData() {
 	m.PersistentSign()
 	m.PersistentCloth()
 	m.PersistentSnap()
+	m.PersistentFavour()
 	log.Debug("persistent end ==================================== ")
 }
 
@@ -67,6 +68,39 @@ func (m *Module) RankPlayer() {
 		index++
 		if p, ok := m.players[baseInfo.Uid]; ok {
 			p.Order = int32(index)
+		}
+	}
+}
+
+// PersistentFavour 固化点赞信息
+func (m *Module) PersistentFavour() {
+	for _, l := range m.favourLogs {
+		fl := FavourLog{
+			From: l.Uid,
+			Day:  l.Day,
+			To:   l.ToUID,
+			Num:  l.Num,
+		}
+
+		m.db.Create(&fl)
+	}
+
+	m.favourLogs = m.favourLogs[0:0]
+
+	for _, l := range m.favourReportLogs {
+		fl := FavourReport{
+			FromUid: l.From,
+			ToUid:   l.To,
+			Num:     l.Num,
+		}
+
+		var oldFL FavourReport
+		// m.db.Where("from_uid = ? and to_uid = ?", fl.FromUid, fl.ToUid).First(&oldFL)
+		log.Debug("PersistentFavour   ==== > %v %v", oldFL, fl)
+		if fl.FromUid != oldFL.FromUid || fl.ToUid != oldFL.ToUid {
+			m.db.Create(&fl)
+		} else {
+			m.db.Model(&fl).Where("from_uid = ? and to_uid = ?", fl.FromUid, fl.ToUid).Updates(fl)
 		}
 	}
 }
@@ -277,7 +311,22 @@ func (m *Module) LoadFromDB() {
 	m.loadSceneConfigs()
 	m.loadLevelConfigs()
 	m.loadSignConfigs()
+	m.loadFavourReport()
 	log.Debug("LoadFromDB end ==================================== ")
+}
+
+func (m *Module) loadFavourReport() {
+	var favourReports []*FavourReport
+	m.db.Find(&favourReports)
+	for _, report := range favourReports {
+		rp := new(entry.FavourReport)
+		rp.From = report.FromUid
+		rp.To = report.ToUid
+		rp.Num = report.Num
+		m.favourReportLogs[report.FromUid+report.ToUid] = rp
+	}
+
+	log.Debug("Load FavourReport  db %v  mem %v", len(favourReports), len(m.favourReportLogs))
 }
 
 func (m *Module) loadPlayer() {

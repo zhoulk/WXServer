@@ -215,11 +215,25 @@ type RankResponse struct {
 
 // RankInfo ...
 type RankInfo struct {
-	Order    int32
-	Uid      string
-	NickName string
-	Star     int32
-	HeadUrl  string
+	Order     int32
+	Uid       string
+	NickName  string
+	Star      int32
+	HeadUrl   string
+	HasFavour bool
+	Favour    int32
+}
+
+// FavourRequest ...
+type FavourRequest struct {
+	Uid string
+
+	ToUid string
+}
+
+// FavourResponse ...
+type FavourResponse struct {
+	Code int
 }
 
 // WXCode2SessionResponse ...
@@ -270,6 +284,7 @@ func main() {
 	http.HandleFunc("/buy", BuyHandler)
 	http.HandleFunc("/sell", SellHandler)
 	http.HandleFunc("/getConfig", GetConfigHandler)
+	http.HandleFunc("/favour", FavourHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -500,7 +515,7 @@ func RankHandler(w http.ResponseWriter, req *http.Request) {
 		json.Unmarshal([]byte(str), &s)
 
 		m := db.GetInstance()
-		ranks := m.GetRank()
+		ranks := m.GetRank(s.Uid)
 
 		res := new(RankResponse)
 		res.Code = 200
@@ -509,10 +524,13 @@ func RankHandler(w http.ResponseWriter, req *http.Request) {
 		for i := 0; i < len(ranks); i++ {
 			p := ranks[i]
 			rankInfo := new(RankInfo)
+			rankInfo.Uid = p.UserId
 			rankInfo.Order = int32(i + 1)
 			rankInfo.NickName = p.Name
 			rankInfo.HeadUrl = p.HeadUrl
 			rankInfo.Star = p.Star
+			rankInfo.HasFavour = p.HasFavour
+			rankInfo.Favour = p.Favour
 			res.Players = append(res.Players, rankInfo)
 		}
 
@@ -523,6 +541,7 @@ func RankHandler(w http.ResponseWriter, req *http.Request) {
 		meRankInfo.NickName = me.Name
 		meRankInfo.HeadUrl = me.HeadUrl
 		meRankInfo.Star = me.Star
+		meRankInfo.Favour = me.Favour
 		res.Me = meRankInfo
 
 		// 给客户端回复数据
@@ -1039,6 +1058,53 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		w.Write(resBytes)
 	}
 	log.Debug("UserInfoHandler end ===================================")
+}
+
+// FavourHandler ...
+func FavourHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("FavourHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(FavourResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("FavourHandler request %v", str)
+
+		var s FavourRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		m.Favour(s.Uid, s.ToUid, 1)
+
+		res := new(FavourResponse)
+		res.Code = 200
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("FavourHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("FavourHandler end ===================================")
 }
 
 // setCrossHeader 设置跨域访问

@@ -32,6 +32,9 @@ type Player struct {
 	MaxCloth int32
 
 	Order int32
+
+	HasFavour bool
+	Favour    int32
 }
 
 // Cal 计算
