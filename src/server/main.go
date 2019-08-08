@@ -156,7 +156,7 @@ type SignResponse struct {
 type GetConfigRequest struct {
 	Uid string
 
-	Type int32 // 1 衣服   2 场景   3 咔位   4 签到
+	Type int32 // 1 衣服   2 场景   3 咔位   4 签到  5 礼物
 }
 
 // GetConfigResponse ..

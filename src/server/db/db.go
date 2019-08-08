@@ -298,6 +298,11 @@ func (m *Module) CreateTables() {
 			panic(err)
 		}
 	}
+	if !m.db.HasTable(&ConfigGift{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigGift{}).Error; err != nil {
+			panic(err)
+		}
+	}
 }
 
 // LoadFromDB 加载数据
@@ -311,6 +316,7 @@ func (m *Module) LoadFromDB() {
 	m.loadSceneConfigs()
 	m.loadLevelConfigs()
 	m.loadSignConfigs()
+	m.loadGiftConfigs()
 	m.loadFavourReport()
 	log.Debug("LoadFromDB end ==================================== ")
 }
@@ -514,4 +520,23 @@ func (m *Module) loadSignConfigs() {
 	}
 
 	log.Debug("Load SignConfigs  db %v  mem %v", len(signConfigs), len(m.signConfigs))
+}
+
+func (m *Module) loadGiftConfigs() {
+	var giftConfigs []*ConfigGift
+	m.db.Find(&giftConfigs)
+
+	m.giftConfigs = m.giftConfigs[0:0]
+	for _, config := range giftConfigs {
+		gift := new(entry.ConfigGift)
+		gift.Id = config.No
+		gift.Name = config.Name
+		gift.Icon = config.Icon
+		gift.Diamond = config.Diamond
+		gift.Favour = config.Favour
+		gift.Reward = config.Reward
+		m.giftConfigs = append(m.giftConfigs, gift)
+	}
+
+	log.Debug("Load GiftConfigs  db %v  mem %v", len(giftConfigs), len(m.giftConfigs))
 }

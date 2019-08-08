@@ -36,3 +36,13 @@ type ConfigSign struct {
 	Day int32
 	Num int32
 }
+
+// ConfigGift  ...
+type ConfigGift struct {
+	Id      int32
+	Name    string
+	Icon    string
+	Diamond int32
+	Favour  int32
+	Reward  int32
+}

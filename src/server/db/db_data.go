@@ -10,6 +10,7 @@ func (m *Module) InitializeConfigs() {
 	m.InitializeSceneConfig()
 	m.InitializeLevelConfig()
 	m.InitializeSignConfig()
+	m.InitializeGiftConfig()
 }
 
 // InitializeSignConfig 初始化咔位配置
@@ -128,11 +129,37 @@ func (m *Module) InitializeClothConfig() {
 
 		"{\"no\" : 501, \"name\" : \"包包1\", \"icon\" : \"player_bag1\", \"type\" : 6, \"level\" : 1, \"star\":20, \"exp\" : 1, \"cost\" : \"[1]\"}",
 		"{\"no\" : 502, \"name\" : \"包包2\", \"icon\" : \"player_bag2\", \"type\" : 6, \"level\" : 2, \"star\":40, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+
+		"{\"no\" : 601, \"name\" : \"留言板\", \"icon\" : \"gift0\", \"type\" : 10, \"diamond\":0, \"favour\" : 1, \"reward\" : 0}",
 	}
 
 	for _, configStr := range configs {
 		// log.Debug("Load ClothConfigs  db %v ", configStr)
 		var s ConfigCloth
+		json.Unmarshal([]byte(configStr), &s)
+		m.db.Create(&s)
+	}
+}
+
+// InitializeGiftConfig 初始化衣服配置
+func (m *Module) InitializeGiftConfig() {
+	m.db.Unscoped().Delete(&ConfigGift{})
+
+	var configs = []string{
+		"{\"no\" : 1, \"name\" : \"留言板\", \"icon\" : \"gift/gift0\", \"diamond\":0, \"favour\" : 1, \"reward\" : 0}",
+		"{\"no\" : 2, \"name\" : \"口红\", \"icon\" : \"gift/gift1\", \"diamond\":100, \"favour\" : 10, \"reward\" : 70}",
+		"{\"no\" : 3, \"name\" : \"轮船\", \"icon\" : \"gift/gift2\", \"diamond\":200, \"favour\" : 20, \"reward\" : 140}",
+		"{\"no\" : 4, \"name\" : \"爱心\", \"icon\" : \"gift/gift3\", \"diamond\":300, \"favour\" : 30, \"reward\" : 210}",
+		"{\"no\" : 5, \"name\" : \"鲜花\", \"icon\" : \"gift/gift4\", \"diamond\":400, \"favour\" : 40, \"reward\" : 280}",
+		"{\"no\" : 6, \"name\" : \"甜品\", \"icon\" : \"gift/gift5\", \"diamond\":500, \"favour\" : 50, \"reward\" : 350}",
+		"{\"no\" : 7, \"name\" : \"跑车\", \"icon\" : \"gift/gift6\", \"diamond\":600, \"favour\" : 60, \"reward\" : 420}",
+		"{\"no\" : 8, \"name\" : \"钻戒\", \"icon\" : \"gift/gift7\", \"diamond\":700, \"favour\" : 70, \"reward\" : 490}",
+		"{\"no\" : 9, \"name\" : \"飞机\", \"icon\" : \"gift/gift8\", \"diamond\":800, \"favour\" : 80, \"reward\" : 560}",
+	}
+
+	for _, configStr := range configs {
+		// log.Debug("Load ClothConfigs  db %v ", configStr)
+		var s ConfigGift
 		json.Unmarshal([]byte(configStr), &s)
 		m.db.Create(&s)
 	}

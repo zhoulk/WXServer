@@ -38,6 +38,11 @@ func (m *Module) GetConfigStr(t int32) string {
 		if err == nil {
 			str = bytes.NewBuffer(bs).String()
 		}
+	} else if t == 5 {
+		bs, err := json.Marshal(m.giftConfigs)
+		if err == nil {
+			str = bytes.NewBuffer(bs).String()
+		}
 	}
 	return str
 }

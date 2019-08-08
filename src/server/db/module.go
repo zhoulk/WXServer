@@ -24,6 +24,7 @@ type Module struct {
 	sceneConfigs     []*entry.ConfigScene
 	levelConfigs     []*entry.ConfigLevel
 	signConfigs      []*entry.ConfigSign
+	giftConfigs      []*entry.ConfigGift
 	favourLogs       []*entry.FavourLog
 	favourFlag       map[string]bool
 	favourReportLogs map[string]*entry.FavourReport
@@ -52,6 +53,7 @@ func init() {
 	GetInstance().sceneConfigs = make([]*entry.ConfigScene, 0)
 	GetInstance().levelConfigs = make([]*entry.ConfigLevel, 0)
 	GetInstance().signConfigs = make([]*entry.ConfigSign, 0)
+	GetInstance().giftConfigs = make([]*entry.ConfigGift, 0)
 	GetInstance().favourLogs = make([]*entry.FavourLog, 0)
 	GetInstance().favourFlag = make(map[string]bool)
 	GetInstance().favourReportLogs = make(map[string]*entry.FavourReport)

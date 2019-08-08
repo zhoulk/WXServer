@@ -112,6 +112,18 @@ type ConfigSign struct {
 	gorm.Model
 }
 
+// ConfigGift 礼物配置
+type ConfigGift struct {
+	No      int32
+	Name    string `gorm:"size:16"`
+	Icon    string `gorm:"size:256"`
+	Diamond int32
+	Favour  int32
+	Reward  int32
+
+	gorm.Model
+}
+
 // FavourLog 点赞日志
 type FavourLog struct {
 	From string `gorm:"size:64"`
