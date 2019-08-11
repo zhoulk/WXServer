@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"server/config"
 	"server/entry"
 	"time"
 
@@ -15,14 +16,20 @@ import (
 
 const (
 	// DBDriver 数据库地址
-
-	//DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
-	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
+	DBDriver = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame?charset=utf8&&parseTime=true"
+	// DBDriverTest 测试数据库地址
+	DBDriverTest = "root:A845240287a@tcp(rm-wz9sw694mi8020vigo.mysql.rds.aliyuncs.com:3306)/wxgame_test?charset=utf8&&parseTime=true"
 )
 
 // ConnectDB 连接数据库
 func (m *Module) ConnectDB() {
-	db, err := gorm.Open("mysql", DBDriver)
+	driver := ""
+	if config.IsDebug {
+		driver = DBDriverTest
+	} else {
+		driver = DBDriver
+	}
+	db, err := gorm.Open("mysql", driver)
 	if err != nil {
 		fmt.Println(err)
 		panic("failed to connect database")
@@ -39,6 +46,7 @@ func (m *Module) PersistentData() {
 	m.PersistentCloth()
 	m.PersistentSnap()
 	m.PersistentFavour()
+	m.persistentBarrageReports()
 	log.Debug("persistent end ==================================== ")
 }
 
@@ -95,14 +103,29 @@ func (m *Module) PersistentFavour() {
 		}
 
 		var oldFL FavourReport
-		// m.db.Where("from_uid = ? and to_uid = ?", fl.FromUid, fl.ToUid).First(&oldFL)
-		log.Debug("PersistentFavour   ==== > %v %v", oldFL, fl)
+		m.db.Where("from_uid = ? and to_uid = ?", fl.FromUid, fl.ToUid).First(&oldFL)
+		// log.Debug("PersistentFavour   ==== > %v %v", oldFL, fl)
 		if fl.FromUid != oldFL.FromUid || fl.ToUid != oldFL.ToUid {
 			m.db.Create(&fl)
 		} else {
 			m.db.Model(&fl).Where("from_uid = ? and to_uid = ?", fl.FromUid, fl.ToUid).Updates(fl)
 		}
 	}
+}
+
+// persistentBarrageReports
+func (m *Module) persistentBarrageReports() {
+	for _, l := range m.addBarrageReports {
+		fl := BarrageReport{
+			FromUid: l.From,
+			ToUid:   l.To,
+			Msg:     l.Msg,
+		}
+
+		m.db.Create(&fl)
+	}
+
+	m.addBarrageReports = m.addBarrageReports[0:0]
 }
 
 // PersistentUser 固化用户信息
@@ -303,6 +326,11 @@ func (m *Module) CreateTables() {
 			panic(err)
 		}
 	}
+	if !m.db.HasTable(&BarrageReport{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&BarrageReport{}).Error; err != nil {
+			panic(err)
+		}
+	}
 }
 
 // LoadFromDB 加载数据
@@ -318,7 +346,22 @@ func (m *Module) LoadFromDB() {
 	m.loadSignConfigs()
 	m.loadGiftConfigs()
 	m.loadFavourReport()
+	m.loadBarrageReport()
 	log.Debug("LoadFromDB end ==================================== ")
+}
+
+func (m *Module) loadBarrageReport() {
+	var barreageReports []*BarrageReport
+	m.db.Find(&barreageReports)
+	for _, report := range barreageReports {
+		rp := new(entry.BarrageReport)
+		rp.From = report.FromUid
+		rp.To = report.ToUid
+		rp.Msg = report.Msg
+		m.barrageReports = append(m.barrageReports, rp)
+	}
+
+	log.Debug("Load BarrageReport  db %v  mem %v", len(barreageReports), len(m.barrageReports))
 }
 
 func (m *Module) loadFavourReport() {

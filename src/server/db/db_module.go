@@ -142,3 +142,12 @@ type FavourReport struct {
 
 	gorm.Model
 }
+
+// BarrageReport 弹幕记录
+type BarrageReport struct {
+	FromUid string `gorm:"size:64"`
+	ToUid   string `gorm:"size:64"`
+	Msg     string
+
+	gorm.Model
+}

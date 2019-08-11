@@ -35,6 +35,7 @@ type Player struct {
 
 	HasFavour bool
 	Favour    int32
+	Constri   int32
 }
 
 // Cal 计算

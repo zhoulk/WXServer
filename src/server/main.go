@@ -68,6 +68,7 @@ type GetUserInfoResponse struct {
 	Exp      int32
 	LvChao   string
 	Diamond  int32
+	Favour   int32
 	Level    int32
 	Scene    int32
 	Hair     int32
@@ -222,6 +223,7 @@ type RankInfo struct {
 	HeadUrl   string
 	HasFavour bool
 	Favour    int32
+	Constri   int32
 }
 
 // FavourRequest ...
@@ -234,6 +236,31 @@ type FavourRequest struct {
 // FavourResponse ...
 type FavourResponse struct {
 	Code int
+}
+
+// RewardRequest ...
+type RewardRequest struct {
+	Uid    string
+	ToUid  string
+	Msg    string
+	GiftId int32
+}
+
+// RewardResponse ...
+type RewardResponse struct {
+	Code int
+}
+
+// GetBarrageRequest ...
+type GetBarrageRequest struct {
+	Uid string
+}
+
+// GetBarrageResponse ...
+type GetBarrageResponse struct {
+	Code int
+
+	Barrages []string
 }
 
 // WXCode2SessionResponse ...
@@ -285,6 +312,8 @@ func main() {
 	http.HandleFunc("/sell", SellHandler)
 	http.HandleFunc("/getConfig", GetConfigHandler)
 	http.HandleFunc("/favour", FavourHandler)
+	http.HandleFunc("/reward", RewardHandler)
+	http.HandleFunc("/getBarrage", GetBarrageHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -514,24 +543,43 @@ func RankHandler(w http.ResponseWriter, req *http.Request) {
 		var str = bytes.NewBuffer(result).String()
 		json.Unmarshal([]byte(str), &s)
 
-		m := db.GetInstance()
-		ranks := m.GetRank(s.Uid)
-
 		res := new(RankResponse)
 		res.Code = 200
 		res.Players = make([]*RankInfo, 0)
 
-		for i := 0; i < len(ranks); i++ {
-			p := ranks[i]
-			rankInfo := new(RankInfo)
-			rankInfo.Uid = p.UserId
-			rankInfo.Order = int32(i + 1)
-			rankInfo.NickName = p.Name
-			rankInfo.HeadUrl = p.HeadUrl
-			rankInfo.Star = p.Star
-			rankInfo.HasFavour = p.HasFavour
-			rankInfo.Favour = p.Favour
-			res.Players = append(res.Players, rankInfo)
+		m := db.GetInstance()
+		if s.Type == 3 {
+			ranks := m.GetFansRank(s.Uid)
+
+			for i := 0; i < len(ranks); i++ {
+				p := ranks[i]
+				rankInfo := new(RankInfo)
+				rankInfo.Uid = p.UserId
+				rankInfo.Order = int32(i + 1)
+				rankInfo.NickName = p.Name
+				rankInfo.HeadUrl = p.HeadUrl
+				rankInfo.Star = p.Star
+				rankInfo.HasFavour = p.HasFavour
+				rankInfo.Favour = p.Favour
+				rankInfo.Constri = p.Constri
+				res.Players = append(res.Players, rankInfo)
+			}
+		} else {
+			ranks := m.GetRank(s.Uid)
+
+			for i := 0; i < len(ranks); i++ {
+				p := ranks[i]
+				rankInfo := new(RankInfo)
+				rankInfo.Uid = p.UserId
+				rankInfo.Order = int32(i + 1)
+				rankInfo.NickName = p.Name
+				rankInfo.HeadUrl = p.HeadUrl
+				rankInfo.Star = p.Star
+				rankInfo.HasFavour = p.HasFavour
+				rankInfo.Favour = p.Favour
+				rankInfo.Constri = p.Constri
+				res.Players = append(res.Players, rankInfo)
+			}
 		}
 
 		me := m.GetPlayer(s.Uid)
@@ -644,7 +692,7 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 					p.OpenId = result.Openid
 					p.Name = s.Name
 					p.HeadUrl = s.HeadUrl
-					p.Diamond = 100
+					// p.Diamond = 100
 					p.MaxCloth = 12
 					p.LoginTime = time.Now()
 					m.SavePlayer(p)
@@ -753,6 +801,7 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 			res.LvChao = "[]"
 		}
 		res.Diamond = player.Diamond
+		res.Favour = player.Favour
 		res.Level = player.Level
 		res.Scene = player.Scene
 		res.Hair = player.Hair
@@ -1105,6 +1154,105 @@ func FavourHandler(w http.ResponseWriter, req *http.Request) {
 		w.Write(resBytes)
 	}
 	log.Debug("FavourHandler end ===================================")
+}
+
+// RewardHandler ...
+func RewardHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("RewardHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(RewardResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("RewardHandler request %v", str)
+
+		var s RewardRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		flag := m.Reward(s.Uid, s.ToUid, s.Msg, s.GiftId)
+
+		res := new(RewardResponse)
+		if flag {
+			res.Code = 200
+		} else {
+			res.Code = 201
+		}
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("RewardHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("RewardHandler end ===================================")
+}
+
+// GetBarrageHandler ...
+func GetBarrageHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("GetBarrageHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(GetBarrageResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("GetBarrageHandler request %v", str)
+
+		var s GetBarrageRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		barrages := m.GetBarrage(s.Uid)
+
+		res := new(GetBarrageResponse)
+		res.Code = 200
+		res.Barrages = barrages
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("GetBarrageHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("GetBarrageHandler end ===================================")
 }
 
 // setCrossHeader 设置跨域访问

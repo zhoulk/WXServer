@@ -20,3 +20,10 @@ type FavourReport struct {
 	To   string
 	Num  int32
 }
+
+// BarrageReport ...
+type BarrageReport struct {
+	From string
+	To   string
+	Msg  string
+}

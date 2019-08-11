@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"server/tool"
+	"sort"
 	"sync"
 	"time"
 
@@ -15,21 +16,22 @@ import (
 
 // Module ...
 type Module struct {
-	players          map[string]*entry.Player
-	signs            map[string]map[string]time.Time
-	cloths           map[string]string
-	snaps            map[string]*entry.Snap
-	rankPlayers      []*entry.Player
-	clothConfigs     []*entry.ConfigCloth
-	sceneConfigs     []*entry.ConfigScene
-	levelConfigs     []*entry.ConfigLevel
-	signConfigs      []*entry.ConfigSign
-	giftConfigs      []*entry.ConfigGift
-	favourLogs       []*entry.FavourLog
-	favourFlag       map[string]bool
-	favourReportLogs map[string]*entry.FavourReport
-
-	db *gorm.DB
+	players           map[string]*entry.Player
+	signs             map[string]map[string]time.Time
+	cloths            map[string]string
+	snaps             map[string]*entry.Snap
+	rankPlayers       []*entry.Player
+	clothConfigs      []*entry.ConfigCloth
+	sceneConfigs      []*entry.ConfigScene
+	levelConfigs      []*entry.ConfigLevel
+	signConfigs       []*entry.ConfigSign
+	giftConfigs       []*entry.ConfigGift
+	favourLogs        []*entry.FavourLog
+	favourFlag        map[string]bool
+	favourReportLogs  map[string]*entry.FavourReport
+	barrageReports    []*entry.BarrageReport
+	addBarrageReports []*entry.BarrageReport
+	db                *gorm.DB
 }
 
 var _instance *Module
@@ -55,6 +57,8 @@ func init() {
 	GetInstance().signConfigs = make([]*entry.ConfigSign, 0)
 	GetInstance().giftConfigs = make([]*entry.ConfigGift, 0)
 	GetInstance().favourLogs = make([]*entry.FavourLog, 0)
+	GetInstance().barrageReports = make([]*entry.BarrageReport, 0)
+	GetInstance().addBarrageReports = make([]*entry.BarrageReport, 0)
 	GetInstance().favourFlag = make(map[string]bool)
 	GetInstance().favourReportLogs = make(map[string]*entry.FavourReport)
 
@@ -135,7 +139,11 @@ func (m *Module) SaveCloth(uid string, snap string) {
 
 // GetPlayer 获取用户信息
 func (m *Module) GetPlayer(uid string) *entry.Player {
-	return m.players[uid]
+	player := m.players[uid]
+	if report, ok := m.favourReportLogs["all"+uid]; ok {
+		player.Favour = report.Num
+	}
+	return player
 }
 
 // FindPlayerByOpenID 根据openId查找
@@ -237,6 +245,29 @@ func (m *Module) GetRank(uid string) []*entry.Player {
 	return m.rankPlayers
 }
 
+type fanPlayers []*entry.Player
+
+func (s fanPlayers) Len() int           { return len(s) }
+func (s fanPlayers) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s fanPlayers) Less(i, j int) bool { return s[i].Favour < s[j].Favour }
+
+// GetFansRank 获取点赞排行
+func (m *Module) GetFansRank(uid string) []*entry.Player {
+	players := make([]*entry.Player, 0)
+	for _, report := range m.favourReportLogs {
+		if report.To == uid {
+			p := m.players[report.From]
+			if p != nil {
+				p.Constri = report.Num
+				players = append(players, p)
+			}
+		}
+	}
+
+	sort.Sort(fanPlayers(players))
+	return players
+}
+
 // Heart 心跳
 func (m *Module) Heart(uid string) {
 	if player, ok := m.players[uid]; ok {
@@ -307,6 +338,91 @@ func (m *Module) Favour(uid string, toUID string, num int32) {
 		report.Num = 1
 		m.favourReportLogs["all"+toUID] = report
 	}
+}
+
+//Reward 送礼物
+func (m *Module) Reward(uid string, toUID string, msg string, giftID int32) bool {
+
+	var curGift *entry.ConfigGift
+	for _, gift := range m.giftConfigs {
+		if gift.Id == giftID {
+			curGift = gift
+		}
+	}
+
+	if m.players[uid].Diamond >= curGift.Diamond {
+		l := new(entry.FavourLog)
+		l.Uid = uid
+		l.ToUID = toUID
+		l.Day = time.Now().Format("2006/1/2")
+		l.Num = curGift.Favour
+		m.favourLogs = append(m.favourLogs, l)
+
+		if report, ok := m.favourReportLogs[uid+toUID]; ok {
+			report.Num = report.Num + curGift.Favour
+			m.favourReportLogs[uid+toUID] = report
+		} else {
+			report := new(entry.FavourReport)
+			report.From = uid
+			report.To = toUID
+			report.Num = curGift.Favour
+			m.favourReportLogs[uid+toUID] = report
+		}
+
+		// 对方加
+		if report, ok := m.favourReportLogs["all"+toUID]; ok {
+			report.Num = report.Num + curGift.Favour
+			m.favourReportLogs["all"+toUID] = report
+		} else {
+			report := new(entry.FavourReport)
+			report.From = "all"
+			report.To = toUID
+			report.Num = curGift.Favour
+			m.favourReportLogs["all"+toUID] = report
+		}
+		// 自己加
+		if report, ok := m.favourReportLogs["all"+uid]; ok {
+			report.Num = report.Num + curGift.Favour
+			m.favourReportLogs["all"+uid] = report
+		} else {
+			report := new(entry.FavourReport)
+			report.From = "all"
+			report.To = uid
+			report.Num = curGift.Favour
+			m.favourReportLogs["all"+uid] = report
+		}
+
+		// 消耗钻石
+		m.players[uid].Diamond -= curGift.Diamond
+		// 添加钻石
+		m.players[toUID].Diamond += curGift.Reward
+
+		if len(msg) > 0 {
+			br := new(entry.BarrageReport)
+			br.From = uid
+			br.To = toUID
+			br.Msg = msg
+			m.addBarrageReports = append(m.addBarrageReports, br)
+			m.barrageReports = append(m.barrageReports, br)
+		}
+
+		return true
+	}
+
+	return false
+}
+
+// GetBarrage  获取弹幕
+func (m *Module) GetBarrage(uid string) []string {
+	barrages := make([]string, 0)
+	for _, report := range m.barrageReports {
+		// log.Debug("GetBarrage  ====>  %v %v %v", uid, report.To, report.Msg)
+		if report.To == uid || report.To == "all" {
+			barrages = append(barrages, report.Msg)
+		}
+	}
+
+	return barrages
 }
 
 // func (m *Module) Rank() {

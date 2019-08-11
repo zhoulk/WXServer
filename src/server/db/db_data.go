@@ -11,6 +11,7 @@ func (m *Module) InitializeConfigs() {
 	m.InitializeLevelConfig()
 	m.InitializeSignConfig()
 	m.InitializeGiftConfig()
+	m.InitializeBarrages()
 }
 
 // InitializeSignConfig 初始化咔位配置
@@ -160,6 +161,32 @@ func (m *Module) InitializeGiftConfig() {
 	for _, configStr := range configs {
 		// log.Debug("Load ClothConfigs  db %v ", configStr)
 		var s ConfigGift
+		json.Unmarshal([]byte(configStr), &s)
+		m.db.Create(&s)
+	}
+}
+
+// InitializeBarrages 初始化弹幕
+func (m *Module) InitializeBarrages() {
+	m.db.Unscoped().Delete(&BarrageReport{})
+
+	var configs = []string{
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"新司机李浩宇不请自来，望各位带哥海涵\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"叫声龙哥，留支付宝 100红包\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"主播fps好高啊，网速这么卡怎么玩？\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"主播ping好低哦，电脑太差了吧\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"嗨呀，这是最骚的\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"好尴尬；好紧张\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"上单我只服PDD\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"卢本伟牛逼\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"弹幕掩护\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"小姐姐\"}",
+		"{\"fromUid\" : \"\", \"toUid\" : \"all\", \"msg\" : \"英雄联盟抄袭王者荣耀\"}",
+	}
+
+	for _, configStr := range configs {
+		// log.Debug("Load ClothConfigs  db %v ", configStr)
+		var s BarrageReport
 		json.Unmarshal([]byte(configStr), &s)
 		m.db.Create(&s)
 	}
