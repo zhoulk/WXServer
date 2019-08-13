@@ -260,7 +260,13 @@ type GetBarrageRequest struct {
 type GetBarrageResponse struct {
 	Code int
 
-	Barrages []string
+	Barrages []*BarrageInfo
+}
+
+// BarrageInfo ...
+type BarrageInfo struct {
+	From string
+	Msg  string
 }
 
 // WXCode2SessionResponse ...
@@ -1237,7 +1243,15 @@ func GetBarrageHandler(w http.ResponseWriter, req *http.Request) {
 		json.Unmarshal([]byte(str), &s)
 
 		m := db.GetInstance()
-		barrages := m.GetBarrage(s.Uid)
+		barrageReports := m.GetBarrage(s.Uid)
+
+		barrages := make([]*BarrageInfo, 0)
+		for _, report := range barrageReports {
+			barrage := new(BarrageInfo)
+			barrage.From = report.From
+			barrage.Msg = report.Msg
+			barrages = append(barrages, barrage)
+		}
 
 		res := new(GetBarrageResponse)
 		res.Code = 200

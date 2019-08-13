@@ -80,8 +80,9 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 		if star == 0 {
 			star = 1
 		}
-		if player.Star < star {
+		if player.Star <= star {
 			player.Star = star
+			player.Exp = s.Exp
 		}
 		if len(s.LvChao) > 0 {
 			player.LvChao = s.LvChao
@@ -413,12 +414,12 @@ func (m *Module) Reward(uid string, toUID string, msg string, giftID int32) bool
 }
 
 // GetBarrage  获取弹幕
-func (m *Module) GetBarrage(uid string) []string {
-	barrages := make([]string, 0)
+func (m *Module) GetBarrage(uid string) []*entry.BarrageReport {
+	barrages := make([]*entry.BarrageReport, 0)
 	for _, report := range m.barrageReports {
 		// log.Debug("GetBarrage  ====>  %v %v %v", uid, report.To, report.Msg)
 		if report.To == uid || report.To == "all" {
-			barrages = append(barrages, report.Msg)
+			barrages = append(barrages, report)
 		}
 	}
 
