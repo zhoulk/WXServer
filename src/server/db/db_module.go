@@ -151,3 +151,22 @@ type BarrageReport struct {
 
 	gorm.Model
 }
+
+// ExtraMoney  额外绿钞
+type ExtraMoney struct {
+	Uid     string `gorm:"size:64"`
+	LvChao  string `gorm:"size:1024"`
+	Diamond int32
+	Reason  int32
+
+	gorm.Model
+}
+
+// OpenFrom  点了谁的分享
+type OpenFrom struct {
+	Uid     string `gorm:"size:64"`
+	FromUid string `gorm:"size:64"`
+	Type    int32
+
+	gorm.Model
+}

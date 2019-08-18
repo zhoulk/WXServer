@@ -31,7 +31,10 @@ type Module struct {
 	favourReportLogs  map[string]*entry.FavourReport
 	barrageReports    []*entry.BarrageReport
 	addBarrageReports []*entry.BarrageReport
-	db                *gorm.DB
+	extraMoney        []*entry.ExtraMoney
+	openFroms         []*entry.OpenFrom
+
+	db *gorm.DB
 }
 
 var _instance *Module
@@ -61,6 +64,8 @@ func init() {
 	GetInstance().addBarrageReports = make([]*entry.BarrageReport, 0)
 	GetInstance().favourFlag = make(map[string]bool)
 	GetInstance().favourReportLogs = make(map[string]*entry.FavourReport)
+	GetInstance().extraMoney = make([]*entry.ExtraMoney, 0)
+	GetInstance().openFroms = make([]*entry.OpenFrom, 0)
 
 }
 
@@ -424,6 +429,41 @@ func (m *Module) GetBarrage(uid string) []*entry.BarrageReport {
 	}
 
 	return barrages
+}
+
+// ExtraMoney  额外绿钞
+func (m *Module) ExtraMoney(uid string, lvChao string, diamond int32) {
+	otherNum := new(tool.BigNumber)
+	var otherArr []int32
+	json.Unmarshal([]byte(lvChao), &otherArr)
+	otherNum.FromArr(otherArr)
+
+	if player, ok := m.players[uid]; ok {
+		bNum := new(tool.BigNumber)
+		var bArr []int32
+		json.Unmarshal([]byte(player.LvChao), &bArr)
+		bNum.FromArr(bArr)
+		bNum.Add(otherNum)
+
+		bs, _ := json.Marshal(bNum.ToArr())
+		player.LvChao = bytes.NewBuffer(bs).String()
+	}
+
+	extra := new(entry.ExtraMoney)
+	extra.Uid = uid
+	extra.LvChao = lvChao
+	extra.Diamond = diamond
+	extra.Reason = 1
+	m.extraMoney = append(m.extraMoney, extra)
+}
+
+// OpenFrom 来自谁的分享
+func (m *Module) OpenFrom(uid string, fromUid string, t int32) {
+	of := new(entry.OpenFrom)
+	of.Uid = uid
+	of.FromUid = fromUid
+	of.Type = t
+	m.openFroms = append(m.openFroms, of)
 }
 
 // func (m *Module) Rank() {

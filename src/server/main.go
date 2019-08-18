@@ -263,6 +263,30 @@ type GetBarrageResponse struct {
 	Barrages []*BarrageInfo
 }
 
+// ExtraMoneyRequest ...
+type ExtraMoneyRequest struct {
+	Uid     string
+	LvChao  string
+	Diamond int32
+}
+
+// ExtraMoneyResponse ...
+type ExtraMoneyResponse struct {
+	Code int
+}
+
+// OpenFromRequest ...
+type OpenFromRequest struct {
+	Uid     string
+	FromUid string
+	Type    int32
+}
+
+// OpenFromResponse ...
+type OpenFromResponse struct {
+	Code int
+}
+
 // BarrageInfo ...
 type BarrageInfo struct {
 	From string
@@ -320,6 +344,8 @@ func main() {
 	http.HandleFunc("/favour", FavourHandler)
 	http.HandleFunc("/reward", RewardHandler)
 	http.HandleFunc("/getBarrage", GetBarrageHandler)
+	http.HandleFunc("/extraMoney", ExtraMoneyHandler)
+	http.HandleFunc("/openFrom", OpenFromHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -1267,6 +1293,100 @@ func GetBarrageHandler(w http.ResponseWriter, req *http.Request) {
 		w.Write(resBytes)
 	}
 	log.Debug("GetBarrageHandler end ===================================")
+}
+
+// ExtraMoneyHandler ...
+func ExtraMoneyHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("ExtraMoneyHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(ExtraMoneyResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("ExtraMoneyHandler request %v", str)
+
+		var s ExtraMoneyRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		m.ExtraMoney(s.Uid, s.LvChao, s.Diamond)
+
+		res := new(ExtraMoneyResponse)
+		res.Code = 200
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("ExtraMoneyHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("ExtraMoneyHandler end ===================================")
+}
+
+// OpenFromHandler ...
+func OpenFromHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("OpenFromHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(OpenFromResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("OpenFromHandler request %v", str)
+
+		var s OpenFromRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		m.OpenFrom(s.Uid, s.FromUid, s.Type)
+
+		res := new(OpenFromResponse)
+		res.Code = 200
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("OpenFromHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("OpenFromHandler end ===================================")
 }
 
 // setCrossHeader 设置跨域访问

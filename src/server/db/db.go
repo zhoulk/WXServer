@@ -47,6 +47,8 @@ func (m *Module) PersistentData() {
 	m.PersistentSnap()
 	m.PersistentFavour()
 	m.persistentBarrageReports()
+	m.persistentExtraMoney()
+	m.PersistentOpenFrom()
 	log.Debug("persistent end ==================================== ")
 }
 
@@ -78,6 +80,22 @@ func (m *Module) RankPlayer() {
 			p.Order = int32(index)
 		}
 	}
+}
+
+// persistentExtraMoney 固化额外收益
+func (m *Module) persistentExtraMoney() {
+	for _, l := range m.extraMoney {
+		fl := ExtraMoney{
+			Uid:     l.Uid,
+			LvChao:  l.LvChao,
+			Diamond: l.Diamond,
+			Reason:  l.Reason,
+		}
+
+		m.db.Create(&fl)
+	}
+
+	m.extraMoney = m.extraMoney[0:0]
 }
 
 // PersistentFavour 固化点赞信息
@@ -259,6 +277,27 @@ func (m *Module) PersistentSnap() {
 	}
 }
 
+// PersistentOpenFrom 固化分享信息
+func (m *Module) PersistentOpenFrom() {
+	for _, v := range m.openFroms {
+		snap := OpenFrom{
+			Uid:     v.Uid,
+			FromUid: v.FromUid,
+			Type:    v.Type,
+		}
+
+		var oldSnap OpenFrom
+		m.db.Where("uid = ?", snap.Uid).First(&oldSnap)
+		if snap.Uid != oldSnap.Uid {
+			m.db.Create(&snap)
+		} else {
+			m.db.Model(&snap).Where("uid = ?", snap.Uid).Updates(snap)
+		}
+	}
+
+	m.openFroms = m.openFroms[0:0]
+}
+
 // CreateTables 创建表
 func (m *Module) CreateTables() {
 	if !m.db.HasTable(&User{}) {
@@ -328,6 +367,16 @@ func (m *Module) CreateTables() {
 	}
 	if !m.db.HasTable(&BarrageReport{}) {
 		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&BarrageReport{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&ExtraMoney{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ExtraMoney{}).Error; err != nil {
+			panic(err)
+		}
+	}
+	if !m.db.HasTable(&OpenFrom{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&OpenFrom{}).Error; err != nil {
 			panic(err)
 		}
 	}
