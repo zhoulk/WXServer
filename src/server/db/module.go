@@ -466,6 +466,18 @@ func (m *Module) OpenFrom(uid string, fromUid string, t int32) {
 	m.openFroms = append(m.openFroms, of)
 }
 
+// GetPrePlayer 获取前面一名玩家
+func (m *Module) GetPrePlayer(uid string) *entry.Player {
+	prePlayer := m.GetPlayer(uid)
+	for _, p := range m.rankPlayers {
+		if p.UserId == uid {
+			break
+		}
+		prePlayer = p
+	}
+	return prePlayer
+}
+
 // func (m *Module) Rank() {
 // 	// log.Debug("rank  ====>  %v %v %v", p.Name, p.Star, p.UserId)
 // 	var insertIndex = -1

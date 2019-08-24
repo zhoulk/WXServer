@@ -287,6 +287,21 @@ type OpenFromResponse struct {
 	Code int
 }
 
+// GetPreUserRequest ...
+type GetPreUserRequest struct {
+	Uid string
+}
+
+// GetPreUserResponse ...
+type GetPreUserResponse struct {
+	Code int
+
+	Name    string
+	Star    int32
+	Exp     int32
+	HeadUrl string
+}
+
 // BarrageInfo ...
 type BarrageInfo struct {
 	From string
@@ -346,6 +361,7 @@ func main() {
 	http.HandleFunc("/getBarrage", GetBarrageHandler)
 	http.HandleFunc("/extraMoney", ExtraMoneyHandler)
 	http.HandleFunc("/openFrom", OpenFromHandler)
+	http.HandleFunc("/getPreUserInfo", GetPreUserHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -1387,6 +1403,57 @@ func OpenFromHandler(w http.ResponseWriter, req *http.Request) {
 		w.Write(resBytes)
 	}
 	log.Debug("OpenFromHandler end ===================================")
+}
+
+// GetPreUserHandler 获取上一名玩家信息
+func GetPreUserHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("GetPreUserHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(GetPreUserResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("GetPreUserHandler request %v", str)
+
+		var s GetPreUserRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		prePlayer := m.GetPrePlayer(s.Uid)
+
+		res := new(GetPreUserResponse)
+		res.Code = 200
+		res.HeadUrl = prePlayer.HeadUrl
+		res.Name = prePlayer.Name
+		res.Star = prePlayer.Star
+		res.Exp = prePlayer.Exp
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("GetPreUserHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("GetPreUserHandler end ===================================")
 }
 
 // setCrossHeader 设置跨域访问
