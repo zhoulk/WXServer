@@ -77,6 +77,7 @@ type GetUserInfoResponse struct {
 	Neck     int32
 	Shoe     int32
 	MaxCloth int32
+	HeadUrl  string
 
 	OffLineLvChao string
 }
@@ -858,6 +859,7 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		res.Neck = player.Neck
 		res.Shoe = player.Shoe
 		res.MaxCloth = player.MaxCloth
+		res.HeadUrl = player.HeadUrl
 
 		res.OffLineLvChao = m.GetOffLineLvChao(s.Uid)
 
