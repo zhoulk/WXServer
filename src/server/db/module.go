@@ -116,6 +116,9 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 		if s.Shoe > 0 {
 			player.Shoe = s.Shoe
 		}
+		if s.Pet > 0 {
+			player.Pet = s.Pet
+		}
 	} else {
 		m.players[s.UserId] = s
 	}

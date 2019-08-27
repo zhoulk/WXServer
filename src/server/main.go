@@ -98,6 +98,7 @@ type UserInfoRequest struct {
 	Trouser int32
 	Neck    int32
 	Shoe    int32
+	Pet     int32
 }
 
 // UserInfoResponse ..
@@ -1141,6 +1142,9 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		if s.Shoe > 0 {
 			player.Shoe = s.Shoe
+		}
+		if s.Pet > 0 {
+			player.Pet = s.Pet
 		}
 		m.SavePlayer(player)
 

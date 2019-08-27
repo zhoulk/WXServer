@@ -38,6 +38,7 @@ type UserExtendInfo struct {
 	Trouser  int32
 	Neck     int32
 	Shoe     int32
+	Pet      int32
 	MaxCloth int32
 
 	gorm.Model

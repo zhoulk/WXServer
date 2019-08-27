@@ -29,6 +29,7 @@ type Player struct {
 	Trouser  int32
 	Neck     int32
 	Shoe     int32
+	Pet      int32
 	MaxCloth int32
 
 	Order int32

@@ -196,6 +196,7 @@ func (m *Module) PersistentUser() {
 			Trouser:  player.Trouser,
 			Neck:     player.Neck,
 			Shoe:     player.Shoe,
+			Pet:      player.Pet,
 			MaxCloth: player.MaxCloth,
 		}
 

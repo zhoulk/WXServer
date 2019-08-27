@@ -167,7 +167,16 @@ func (m *Module) InitializeClothConfig() {
 		"{\"no\" : 501, \"name\" : \"包包1\", \"icon\" : \"player_bag1\", \"type\" : 6, \"level\" : 1, \"star\":20, \"exp\" : 1, \"cost\" : \"[1]\"}",
 		"{\"no\" : 502, \"name\" : \"包包2\", \"icon\" : \"player_bag2\", \"type\" : 6, \"level\" : 2, \"star\":40, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
 
-		"{\"no\" : 601, \"name\" : \"留言板\", \"icon\" : \"gift0\", \"type\" : 10, \"diamond\":0, \"favour\" : 1, \"reward\" : 0}",
+		"{\"no\" : 701, \"name\" : \"宠物1\", \"icon\" : \"pet/chongwu_01\", \"type\" : 7, \"level\" : 1, \"star\":10, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+		"{\"no\" : 702, \"name\" : \"宠物2\", \"icon\" : \"pet/chongwu_02\", \"type\" : 7, \"level\" : 2, \"star\":20, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+		"{\"no\" : 703, \"name\" : \"宠物3\", \"icon\" : \"pet/chongwu_03\", \"type\" : 7, \"level\" : 3, \"star\":30, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+		"{\"no\" : 704, \"name\" : \"宠物4\", \"icon\" : \"pet/chongwu_04\", \"type\" : 7, \"level\" : 4, \"star\":40, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+		"{\"no\" : 705, \"name\" : \"宠物5\", \"icon\" : \"pet/chongwu_05\", \"type\" : 7, \"level\" : 5, \"star\":50, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+		"{\"no\" : 706, \"name\" : \"宠物6\", \"icon\" : \"pet/chongwu_06\", \"type\" : 7, \"level\" : 6, \"star\":60, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+		"{\"no\" : 707, \"name\" : \"宠物7\", \"icon\" : \"pet/chongwu_07\", \"type\" : 7, \"level\" : 7, \"star\":70, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+		"{\"no\" : 708, \"name\" : \"宠物8\", \"icon\" : \"pet/chongwu_08\", \"type\" : 7, \"level\" : 8, \"star\":80, \"exp\" : 5, \"cost\" : \"[0,1]\"}",
+
+		"{\"no\" : 1001, \"name\" : \"留言板\", \"icon\" : \"gift0\", \"type\" : 10, \"diamond\":0, \"favour\" : 1, \"reward\" : 0}",
 	}
 
 	for _, configStr := range configs {
