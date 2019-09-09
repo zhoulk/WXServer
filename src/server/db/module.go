@@ -119,6 +119,15 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 		if s.Pet > 0 {
 			player.Pet = s.Pet
 		}
+		if s.MaxCoat > 0 {
+			player.MaxCoat = s.MaxCoat
+		}
+		if s.MaxShoe > 0 {
+			player.MaxShoe = s.MaxShoe
+		}
+		if s.MaxTrouser > 0 {
+			player.MaxTrouser = s.MaxTrouser
+		}
 	} else {
 		m.players[s.UserId] = s
 	}

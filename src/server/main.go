@@ -63,21 +63,24 @@ type GetUserInfoRequest struct {
 type GetUserInfoResponse struct {
 	Code int
 
-	Name     string
-	Star     int32
-	Exp      int32
-	LvChao   string
-	Diamond  int32
-	Favour   int32
-	Level    int32
-	Scene    int32
-	Hair     int32
-	Coat     int32
-	Trouser  int32
-	Neck     int32
-	Shoe     int32
-	MaxCloth int32
-	HeadUrl  string
+	Name       string
+	Star       int32
+	Exp        int32
+	LvChao     string
+	Diamond    int32
+	Favour     int32
+	Level      int32
+	Scene      int32
+	Hair       int32
+	Coat       int32
+	Trouser    int32
+	Neck       int32
+	Shoe       int32
+	MaxCloth   int32
+	HeadUrl    string
+	MaxCoat    int32
+	MaxTrouser int32
+	MaxShoe    int32
 
 	OffLineLvChao string
 }
@@ -86,19 +89,22 @@ type GetUserInfoResponse struct {
 type UserInfoRequest struct {
 	Uid string
 
-	Name    string
-	Star    int32
-	Exp     int32
-	LvChao  string
-	Diamond int32
-	Level   int32
-	Scene   int32
-	Hair    int32
-	Coat    int32
-	Trouser int32
-	Neck    int32
-	Shoe    int32
-	Pet     int32
+	Name       string
+	Star       int32
+	Exp        int32
+	LvChao     string
+	Diamond    int32
+	Level      int32
+	Scene      int32
+	Hair       int32
+	Coat       int32
+	Trouser    int32
+	Neck       int32
+	Shoe       int32
+	Pet        int32
+	MaxCoat    int32
+	MaxTrouser int32
+	MaxShoe    int32
 }
 
 // UserInfoResponse ..
@@ -861,6 +867,9 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		res.Shoe = player.Shoe
 		res.MaxCloth = player.MaxCloth
 		res.HeadUrl = player.HeadUrl
+		res.MaxCoat = player.MaxCoat
+		res.MaxShoe = player.MaxShoe
+		res.MaxTrouser = player.MaxTrouser
 
 		res.OffLineLvChao = m.GetOffLineLvChao(s.Uid)
 
@@ -1145,6 +1154,15 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		if s.Pet > 0 {
 			player.Pet = s.Pet
+		}
+		if s.MaxCoat > 0 {
+			player.MaxCoat = s.MaxCoat
+		}
+		if s.MaxShoe > 0 {
+			player.MaxShoe = s.MaxShoe
+		}
+		if s.MaxTrouser > 0 {
+			player.MaxTrouser = s.MaxTrouser
 		}
 		m.SavePlayer(player)
 

@@ -18,19 +18,22 @@ type Player struct {
 	LogoutTime time.Time
 	CreateTime time.Time
 
-	Star     int32
-	Exp      int32
-	LvChao   string
-	Diamond  int32
-	Level    int32
-	Scene    int32
-	Hair     int32
-	Coat     int32
-	Trouser  int32
-	Neck     int32
-	Shoe     int32
-	Pet      int32
-	MaxCloth int32
+	Star       int32
+	Exp        int32
+	LvChao     string
+	Diamond    int32
+	Level      int32
+	Scene      int32
+	Hair       int32
+	Coat       int32
+	Trouser    int32
+	Neck       int32
+	Shoe       int32
+	Pet        int32
+	MaxCloth   int32
+	MaxCoat    int32
+	MaxTrouser int32
+	MaxShoe    int32
 
 	Order int32
 
