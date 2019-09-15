@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/name5566/leaf/log"
 
 	"server/entry"
 )
@@ -471,11 +472,25 @@ func (m *Module) ExtraMoney(uid string, lvChao string, diamond int32) {
 
 // OpenFrom 来自谁的分享
 func (m *Module) OpenFrom(uid string, fromUid string, t int32) {
-	of := new(entry.OpenFrom)
-	of.Uid = uid
-	of.FromUid = fromUid
-	of.Type = t
-	m.openFroms = append(m.openFroms, of)
+	log.Debug("OpenFrom  ====>  %v ", len(m.openFroms))
+
+	exist := false
+	for _, p := range m.openFroms {
+		if p.Uid == uid && p.FromUid == fromUid {
+			exist = true
+			break
+		}
+	}
+
+	if !exist {
+		of := new(entry.OpenFrom)
+		of.Uid = uid
+		of.FromUid = fromUid
+		of.Type = t
+		m.openFroms = append(m.openFroms, of)
+	}
+
+	log.Debug("OpenFrom  ====>  %v ", len(m.openFroms))
 }
 
 // GetPrePlayer 获取前面一名玩家
@@ -488,6 +503,39 @@ func (m *Module) GetPrePlayer(uid string) *entry.Player {
 		prePlayer = p
 	}
 	return prePlayer
+}
+
+// GetInvitePlayers 获取邀请了哪些玩家玩家
+func (m *Module) GetInvitePlayers(uid string) []*entry.Player {
+	players := make([]*entry.Player, 0)
+	for _, p := range m.openFroms {
+		log.Debug("GetInvitePlayers  ====>  %v %v", p.Uid, p.FromUid)
+		if p.FromUid == uid {
+			player := m.GetPlayer(p.Uid)
+			players = append(players, player)
+		}
+	}
+	return players
+}
+
+// GetDailyGift ...
+func (m *Module) GetDailyGift(uid string) string {
+	otherNum := new(tool.BigNumber)
+	otherArr := []int32{1, 0, 0, 1, 0, 1}
+	otherNum.FromArr(otherArr)
+
+	player := m.GetPlayer(uid)
+
+	bNum := new(tool.BigNumber)
+	var bArr []int32
+	json.Unmarshal([]byte(player.LvChao), &bArr)
+	bNum.FromArr(bArr)
+	bNum.Add(otherNum)
+
+	bs, _ := json.Marshal(otherNum.ToArr())
+	lvChao := bytes.NewBuffer(bs).String()
+
+	return lvChao
 }
 
 // func (m *Module) Rank() {

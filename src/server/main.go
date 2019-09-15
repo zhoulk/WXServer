@@ -310,6 +310,32 @@ type GetPreUserResponse struct {
 	HeadUrl string
 }
 
+// DailyGiftRequest ...
+type DailyGiftRequest struct {
+	Uid string
+}
+
+// DailyGiftResponse ...
+type DailyGiftResponse struct {
+	Code int
+
+	Users []*UserInfo
+}
+
+type GainDailyGiftRequest struct {
+	Uid string
+}
+
+type GainDailyGiftResponse struct {
+	Code   int
+	LvChao string
+}
+
+type UserInfo struct {
+	Uid     string
+	HeadUrl string
+}
+
 // BarrageInfo ...
 type BarrageInfo struct {
 	From string
@@ -370,6 +396,8 @@ func main() {
 	http.HandleFunc("/extraMoney", ExtraMoneyHandler)
 	http.HandleFunc("/openFrom", OpenFromHandler)
 	http.HandleFunc("/getPreUserInfo", GetPreUserHandler)
+	http.HandleFunc("/dailyGift", DailyGiftHandler)
+	http.HandleFunc("gainDailyGift", GainDailyGiftHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -1478,6 +1506,108 @@ func GetPreUserHandler(w http.ResponseWriter, req *http.Request) {
 		w.Write(resBytes)
 	}
 	log.Debug("GetPreUserHandler end ===================================")
+}
+
+// DailyGiftHandler ...
+func DailyGiftHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("DailyGiftHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(DailyGiftResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("DailyGiftHandler request %v", str)
+
+		var s DailyGiftRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		invitePlayers := m.GetInvitePlayers(s.Uid)
+
+		res := new(DailyGiftResponse)
+		res.Code = 200
+		res.Users = make([]*UserInfo, 0)
+		for _, p := range invitePlayers {
+			u := new(UserInfo)
+			u.Uid = p.UserId
+			u.HeadUrl = p.HeadUrl
+			res.Users = append(res.Users, u)
+		}
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("DailyGiftHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("DailyGiftHandler end ===================================")
+}
+
+// GainDailyGiftHandler ...
+func GainDailyGiftHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("GainDailyGiftHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(GainDailyGiftResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("GainDailyGiftHandler request %v", str)
+
+		var s GainDailyGiftRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		gift := m.GetDailyGift(s.Uid)
+
+		res := new(GainDailyGiftResponse)
+		res.Code = 200
+		res.LvChao = gift
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("GainDailyGiftHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("GainDailyGiftHandler end ===================================")
 }
 
 // setCrossHeader 设置跨域访问

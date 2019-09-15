@@ -291,15 +291,15 @@ func (m *Module) PersistentOpenFrom() {
 		}
 
 		var oldSnap OpenFrom
-		m.db.Where("uid = ?", snap.Uid).First(&oldSnap)
+		m.db.Where("uid = ? AND from_uid = ?", snap.Uid, snap.FromUid).First(&oldSnap)
 		if snap.Uid != oldSnap.Uid {
 			m.db.Create(&snap)
 		} else {
-			m.db.Model(&snap).Where("uid = ?", snap.Uid).Updates(snap)
+			m.db.Model(&snap).Where("uid = ? AND from_uid = ?", snap.Uid, snap.FromUid).Updates(snap)
 		}
 	}
 
-	m.openFroms = m.openFroms[0:0]
+	// m.openFroms = m.openFroms[0:0]
 }
 
 // CreateTables 创建表
@@ -400,7 +400,22 @@ func (m *Module) LoadFromDB() {
 	m.loadGiftConfigs()
 	m.loadFavourReport()
 	m.loadBarrageReport()
+	m.loadOpenFrom()
 	log.Debug("LoadFromDB end ==================================== ")
+}
+
+func (m *Module) loadOpenFrom() {
+	var openFroms []*OpenFrom
+	m.db.Find(&openFroms)
+	for _, item := range openFroms {
+		rp := new(entry.OpenFrom)
+		rp.Uid = item.Uid
+		rp.FromUid = item.FromUid
+		rp.Type = item.Type
+		m.openFroms = append(m.openFroms, rp)
+	}
+
+	log.Debug("Load OpenFrom  db %v  mem %v", len(openFroms), len(m.openFroms))
 }
 
 func (m *Module) loadBarrageReport() {
