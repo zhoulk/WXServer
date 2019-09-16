@@ -320,6 +320,7 @@ type DailyGiftResponse struct {
 	Code int
 
 	Users []*UserInfo
+	Flag  bool
 }
 
 type GainDailyGiftRequest struct {
@@ -397,7 +398,7 @@ func main() {
 	http.HandleFunc("/openFrom", OpenFromHandler)
 	http.HandleFunc("/getPreUserInfo", GetPreUserHandler)
 	http.HandleFunc("/dailyGift", DailyGiftHandler)
-	http.HandleFunc("gainDailyGift", GainDailyGiftHandler)
+	http.HandleFunc("/gainDailyGift", GainDailyGiftHandler)
 
 	// 监听绑定
 	err := http.ListenAndServe(":12345", nil)
@@ -1539,6 +1540,7 @@ func DailyGiftHandler(w http.ResponseWriter, req *http.Request) {
 
 		m := db.GetInstance()
 		invitePlayers := m.GetInvitePlayers(s.Uid)
+		flag := m.CheckGainDailyGift(s.Uid)
 
 		res := new(DailyGiftResponse)
 		res.Code = 200
@@ -1549,6 +1551,7 @@ func DailyGiftHandler(w http.ResponseWriter, req *http.Request) {
 			u.HeadUrl = p.HeadUrl
 			res.Users = append(res.Users, u)
 		}
+		res.Flag = flag
 
 		// 给客户端回复数据
 		resBytes, err := json.Marshal(res)

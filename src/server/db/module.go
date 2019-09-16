@@ -34,6 +34,7 @@ type Module struct {
 	addBarrageReports []*entry.BarrageReport
 	extraMoney        []*entry.ExtraMoney
 	openFroms         []*entry.OpenFrom
+	gainDailyGifts    map[string]bool
 
 	db *gorm.DB
 }
@@ -64,6 +65,7 @@ func init() {
 	GetInstance().barrageReports = make([]*entry.BarrageReport, 0)
 	GetInstance().addBarrageReports = make([]*entry.BarrageReport, 0)
 	GetInstance().favourFlag = make(map[string]bool)
+	GetInstance().gainDailyGifts = make(map[string]bool)
 	GetInstance().favourReportLogs = make(map[string]*entry.FavourReport)
 	GetInstance().extraMoney = make([]*entry.ExtraMoney, 0)
 	GetInstance().openFroms = make([]*entry.OpenFrom, 0)
@@ -518,8 +520,24 @@ func (m *Module) GetInvitePlayers(uid string) []*entry.Player {
 	return players
 }
 
+func (m *Module) CheckGainDailyGift(uid string) bool {
+	day := time.Now().Format("2006/1/2")
+	if _, ok := m.gainDailyGifts[uid+day]; ok {
+		return true
+	}
+	return false
+}
+
 // GetDailyGift ...
 func (m *Module) GetDailyGift(uid string) string {
+
+	day := time.Now().Format("2006/1/2")
+	if _, ok := m.gainDailyGifts[uid+day]; ok {
+
+	} else {
+		m.gainDailyGifts[uid+day] = true
+	}
+
 	otherNum := new(tool.BigNumber)
 	otherArr := []int32{1, 0, 0, 1, 0, 1}
 	otherNum.FromArr(otherArr)
@@ -531,9 +549,11 @@ func (m *Module) GetDailyGift(uid string) string {
 	json.Unmarshal([]byte(player.LvChao), &bArr)
 	bNum.FromArr(bArr)
 	bNum.Add(otherNum)
+	bs, _ := json.Marshal(bNum.ToArr())
+	player.LvChao = bytes.NewBuffer(bs).String()
 
-	bs, _ := json.Marshal(otherNum.ToArr())
-	lvChao := bytes.NewBuffer(bs).String()
+	otherBs, _ := json.Marshal(otherNum.ToArr())
+	lvChao := bytes.NewBuffer(otherBs).String()
 
 	return lvChao
 }
