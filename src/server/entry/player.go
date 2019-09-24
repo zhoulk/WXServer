@@ -24,6 +24,7 @@ type Player struct {
 	Diamond    int32
 	Level      int32
 	Scene      int32
+	CP         int32
 	Hair       int32
 	Coat       int32
 	Trouser    int32

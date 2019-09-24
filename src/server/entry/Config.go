@@ -21,6 +21,17 @@ type ConfigScene struct {
 	Star  int32
 }
 
+// ConfigCP  ...
+type ConfigCP struct {
+	Id    int32
+	Name  string
+	Icon  string
+	Level int32
+	Star  int32
+	Type  int32
+	Rate  string
+}
+
 // ConfigLevel  ...
 type ConfigLevel struct {
 	Id    int32

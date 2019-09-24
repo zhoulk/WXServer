@@ -33,6 +33,7 @@ type UserExtendInfo struct {
 	Uid        string `gorm:"size:64;unique;not null"`
 	Level      int32
 	Scene      int32
+	CP         int32
 	Hair       int32
 	Coat       int32
 	Trouser    int32
@@ -92,6 +93,19 @@ type ConfigScene struct {
 	Icon  string `gorm:"size:256"`
 	Level int32
 	Star  int32
+
+	gorm.Model
+}
+
+// ConfigCP CP配置
+type ConfigCP struct {
+	No    int32
+	Name  string `gorm:"size:16"`
+	Icon  string `gorm:"size:256"`
+	Level int32
+	Star  int32
+	Type  int32
+	Rate  string `gorm:"size:1024"`
 
 	gorm.Model
 }

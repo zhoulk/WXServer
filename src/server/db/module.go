@@ -27,6 +27,7 @@ type Module struct {
 	levelConfigs      []*entry.ConfigLevel
 	signConfigs       []*entry.ConfigSign
 	giftConfigs       []*entry.ConfigGift
+	CPConfigs         []*entry.ConfigCP
 	favourLogs        []*entry.FavourLog
 	favourFlag        map[string]bool
 	favourReportLogs  map[string]*entry.FavourReport
@@ -61,6 +62,7 @@ func init() {
 	GetInstance().levelConfigs = make([]*entry.ConfigLevel, 0)
 	GetInstance().signConfigs = make([]*entry.ConfigSign, 0)
 	GetInstance().giftConfigs = make([]*entry.ConfigGift, 0)
+	GetInstance().CPConfigs = make([]*entry.ConfigCP, 0)
 	GetInstance().favourLogs = make([]*entry.FavourLog, 0)
 	GetInstance().barrageReports = make([]*entry.BarrageReport, 0)
 	GetInstance().addBarrageReports = make([]*entry.BarrageReport, 0)
@@ -103,6 +105,9 @@ func (m *Module) SavePlayer(s *entry.Player) error {
 		}
 		if s.Scene > 0 {
 			player.Scene = s.Scene
+		}
+		if s.CP > 0 {
+			player.CP = s.CP
 		}
 		if s.Hair > 0 {
 			player.Hair = s.Hair

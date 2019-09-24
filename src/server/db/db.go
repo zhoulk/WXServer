@@ -191,6 +191,7 @@ func (m *Module) PersistentUser() {
 			Uid:        player.UserId,
 			Level:      player.Level,
 			Scene:      player.Scene,
+			CP:         player.CP,
 			Hair:       player.Hair,
 			Coat:       player.Coat,
 			Trouser:    player.Trouser,
@@ -369,6 +370,11 @@ func (m *Module) CreateTables() {
 			panic(err)
 		}
 	}
+	if !m.db.HasTable(&ConfigCP{}) {
+		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&ConfigCP{}).Error; err != nil {
+			panic(err)
+		}
+	}
 	if !m.db.HasTable(&BarrageReport{}) {
 		if err := m.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8").CreateTable(&BarrageReport{}).Error; err != nil {
 			panic(err)
@@ -398,6 +404,7 @@ func (m *Module) LoadFromDB() {
 	m.loadLevelConfigs()
 	m.loadSignConfigs()
 	m.loadGiftConfigs()
+	m.loadCPConfigs()
 	m.loadFavourReport()
 	m.loadBarrageReport()
 	m.loadOpenFrom()
@@ -487,6 +494,7 @@ func (m *Module) loadPlayer() {
 		// log.Debug("userbaseInfo ==== %v", baseInfo.Uid)
 		tempPlayers[extendInfo.Uid].Level = extendInfo.Level
 		tempPlayers[extendInfo.Uid].Scene = extendInfo.Scene
+		tempPlayers[extendInfo.Uid].CP = extendInfo.CP
 		tempPlayers[extendInfo.Uid].Coat = extendInfo.Coat
 		tempPlayers[extendInfo.Uid].Trouser = extendInfo.Trouser
 		tempPlayers[extendInfo.Uid].Hair = extendInfo.Hair
@@ -600,6 +608,26 @@ func (m *Module) loadSceneConfigs() {
 	}
 
 	log.Debug("Load SceneConfigs  db %v  mem %v", len(sceneConfigs), len(m.sceneConfigs))
+}
+
+func (m *Module) loadCPConfigs() {
+	var CPConfigs []*ConfigCP
+	m.db.Find(&CPConfigs)
+
+	m.CPConfigs = m.CPConfigs[0:0]
+	for _, config := range CPConfigs {
+		cp := new(entry.ConfigCP)
+		cp.Id = config.No
+		cp.Name = config.Name
+		cp.Icon = config.Icon
+		cp.Level = config.Level
+		cp.Star = config.Star
+		cp.Rate = config.Rate
+		cp.Type = config.Type
+		m.CPConfigs = append(m.CPConfigs, cp)
+	}
+
+	log.Debug("Load CPConfigs  db %v  mem %v", len(CPConfigs), len(m.CPConfigs))
 }
 
 func (m *Module) loadLevelConfigs() {

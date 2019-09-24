@@ -43,6 +43,11 @@ func (m *Module) GetConfigStr(t int32) string {
 		if err == nil {
 			str = bytes.NewBuffer(bs).String()
 		}
+	} else if t == 6 {
+		bs, err := json.Marshal(m.CPConfigs)
+		if err == nil {
+			str = bytes.NewBuffer(bs).String()
+		}
 	}
 	return str
 }

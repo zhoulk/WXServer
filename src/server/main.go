@@ -71,6 +71,7 @@ type GetUserInfoResponse struct {
 	Favour     int32
 	Level      int32
 	Scene      int32
+	CP         int32
 	Hair       int32
 	Coat       int32
 	Trouser    int32
@@ -96,6 +97,7 @@ type UserInfoRequest struct {
 	Diamond    int32
 	Level      int32
 	Scene      int32
+	CP         int32
 	Hair       int32
 	Coat       int32
 	Trouser    int32
@@ -889,6 +891,7 @@ func GetUserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		res.Favour = player.Favour
 		res.Level = player.Level
 		res.Scene = player.Scene
+		res.CP = player.CP
 		res.Hair = player.Hair
 		res.Coat = player.Coat
 		res.Trouser = player.Trouser
@@ -1165,6 +1168,9 @@ func UserInfoHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		if s.Scene > 0 {
 			player.Scene = s.Scene
+		}
+		if s.CP > 0 {
+			player.CP = s.CP
 		}
 		if s.Hair > 0 {
 			player.Hair = s.Hair
