@@ -91,16 +91,16 @@ func (m *Module) InitializeCPConfig() {
 	m.db.Unscoped().Delete(&ConfigCP{})
 
 	var configs = []string{
-		"{\"no\" : 1, \"name\" : \"闺蜜1\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/0011.jpg\", \"star\" : 0, \"level\" : 1, \"type\" : 1, \"rate\" : \"[0,0,1]\"}",
-		"{\"no\" : 2, \"name\" : \"闺蜜2\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/002.jpg\", \"star\" : 50, \"level\" : 2, \"type\" : 1, \"rate\" : \"[0,0,2]\"}",
-		"{\"no\" : 3, \"name\" : \"闺蜜3\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/003.jpg\", \"star\" : 100, \"level\" : 3, \"type\" : 1, \"rate\" : \"[0,0,3]\"}",
-		"{\"no\" : 4, \"name\" : \"闺蜜4\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/004.jpg\", \"star\" : 150, \"level\" : 4, \"type\" : 1, \"rate\" : \"[0,0,4]\"}",
-		"{\"no\" : 5, \"name\" : \"闺蜜5\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/005.jpg\", \"star\" : 200, \"level\" : 5, \"type\" : 1, \"rate\" : \"[0,0,5]\"}",
-		"{\"no\" : 100, \"name\" : \"男朋友1\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/006.jpg\", \"star\" : 0, \"level\" : 1, \"type\" : 2, \"rate\" : \"[0,0,1]\"}",
-		"{\"no\" : 101, \"name\" : \"男朋友2\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/007.jpg\", \"star\" : 50, \"level\" : 2, \"type\" : 2, \"rate\" : \"[0,0,2]\"}",
-		"{\"no\" : 102, \"name\" : \"男朋友3\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/008.jpg\", \"star\" : 150, \"level\" : 3, \"type\" : 2, \"rate\" : \"[0,0,3]\"}",
-		"{\"no\" : 103, \"name\" : \"男朋友4\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/009.jpg\", \"star\" : 250, \"level\" : 4, \"type\" : 2, \"rate\" : \"[0,0,4]\"}",
-		"{\"no\" : 104, \"name\" : \"男朋友5\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/010.jpg\", \"star\" : 350, \"level\" : 5, \"type\" : 2, \"rate\" : \"[0,0,5]\"}",
+		"{\"no\" : 1, \"name\" : \"闺蜜1\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/001.png\", \"star\" : 0, \"level\" : 1, \"type\" : 1, \"rate\" : \"[0,0,1]\"}",
+		"{\"no\" : 2, \"name\" : \"闺蜜2\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/002.png\", \"star\" : 50, \"level\" : 2, \"type\" : 1, \"rate\" : \"[0,0,2]\"}",
+		"{\"no\" : 3, \"name\" : \"闺蜜3\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/003.png\", \"star\" : 100, \"level\" : 3, \"type\" : 1, \"rate\" : \"[0,0,3]\"}",
+		"{\"no\" : 4, \"name\" : \"闺蜜4\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/004.png\", \"star\" : 150, \"level\" : 4, \"type\" : 1, \"rate\" : \"[0,0,4]\"}",
+		"{\"no\" : 5, \"name\" : \"闺蜜5\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/005.png\", \"star\" : 200, \"level\" : 5, \"type\" : 1, \"rate\" : \"[0,0,5]\"}",
+		"{\"no\" : 100, \"name\" : \"男朋友1\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/006.png\", \"star\" : 0, \"level\" : 1, \"type\" : 2, \"rate\" : \"[0,0,1]\"}",
+		"{\"no\" : 101, \"name\" : \"男朋友2\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/007.png\", \"star\" : 50, \"level\" : 2, \"type\" : 2, \"rate\" : \"[0,0,2]\"}",
+		"{\"no\" : 102, \"name\" : \"男朋友3\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/008.png\", \"star\" : 150, \"level\" : 3, \"type\" : 2, \"rate\" : \"[0,0,3]\"}",
+		"{\"no\" : 103, \"name\" : \"男朋友4\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/009.png\", \"star\" : 250, \"level\" : 4, \"type\" : 2, \"rate\" : \"[0,0,4]\"}",
+		"{\"no\" : 104, \"name\" : \"男朋友5\", \"icon\" : \"https://mudgame.com.cn/wx/res/WXGame/101/cp/010.png\", \"star\" : 350, \"level\" : 5, \"type\" : 2, \"rate\" : \"[0,0,5]\"}",
 	}
 
 	for _, configStr := range configs {
