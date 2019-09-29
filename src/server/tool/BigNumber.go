@@ -34,8 +34,8 @@ func (b *BigNumber) ToArr() []int32 {
 func (b *BigNumber) Add(other *BigNumber) {
 	for i := 0; i < MaxLength-1; i++ {
 		b.numArr[i] += other.numArr[i]
-		b.numArr[i+1] += int32(b.numArr[i] / 10)
-		b.numArr[i] = b.numArr[i] % 10
+		b.numArr[i+1] += int32(b.numArr[i] / 1000)
+		b.numArr[i] = b.numArr[i] % 1000
 	}
 }
 
@@ -46,7 +46,7 @@ func (b *BigNumber) Minus(other *BigNumber) {
 			b.numArr[i] -= other.numArr[i]
 		} else {
 			b.numArr[i+1]--
-			b.numArr[i] += 10
+			b.numArr[i] += 1000
 			b.numArr[i] -= b.numArr[i]
 		}
 	}
@@ -55,8 +55,8 @@ func (b *BigNumber) Minus(other *BigNumber) {
 func (b *BigNumber) addRaw(val int32) {
 	b.numArr[0] += val
 	for i := 0; i < len(b.numArr)-1; i++ {
-		b.numArr[i+1] += int32(b.numArr[i] / 10)
-		b.numArr[i] = b.numArr[i] % 10
+		b.numArr[i+1] += int32(b.numArr[i] / 1000)
+		b.numArr[i] = b.numArr[i] % 1000
 	}
 }
 

@@ -502,14 +502,18 @@ func (m *Module) OpenFrom(uid string, fromUid string, t int32) {
 
 // GetPrePlayer 获取前面一名玩家
 func (m *Module) GetPrePlayer(uid string) *entry.Player {
-	prePlayer := m.GetPlayer(uid)
-	for _, p := range m.rankPlayers {
+	currentUser := m.GetPlayer(uid)
+	l := len(m.rankPlayers)
+	for i := l - 1; i >= 0; i-- {
+		p := m.rankPlayers[i]
 		if p.UserId == uid {
-			break
+			continue
 		}
-		prePlayer = p
+		if currentUser.Star < p.Star {
+			return p
+		}
 	}
-	return prePlayer
+	return currentUser
 }
 
 // GetInvitePlayers 获取邀请了哪些玩家玩家
