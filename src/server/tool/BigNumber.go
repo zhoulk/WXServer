@@ -1,5 +1,10 @@
 package tool
 
+import (
+	"bytes"
+	"encoding/json"
+)
+
 // BigNumber ...
 type BigNumber struct {
 	numArr []int32
@@ -27,7 +32,15 @@ func (b *BigNumber) FromArr(arr []int32) {
 
 // ToArr ...
 func (b *BigNumber) ToArr() []int32 {
-	return b.numArr
+	len := len(b.numArr)
+	index := 0
+	for i := len - 1; i >= 0; i-- {
+		if b.numArr[i] > 0 {
+			index = i
+			break
+		}
+	}
+	return b.numArr[0 : index+1]
 }
 
 // Add ...
@@ -64,4 +77,9 @@ func (b *BigNumber) reset() {
 	for i := 0; i < len(b.numArr); i++ {
 		b.numArr[i] = 0
 	}
+}
+
+func (b *BigNumber) ToString() string {
+	bs, _ := json.Marshal(b.ToArr())
+	return bytes.NewBuffer(bs).String()
 }

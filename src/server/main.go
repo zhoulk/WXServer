@@ -784,6 +784,7 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 					p.LoginTime = time.Now()
 					m.SavePlayer(p)
 				} else {
+					p.MaxCloth = 12
 					p.LoginTime = time.Now()
 					m.SavePlayer(p)
 				}

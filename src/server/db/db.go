@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"server/config"
 	"server/entry"
+	"server/tool"
 	"time"
 
 	"github.com/name5566/leaf/log"
@@ -586,6 +587,12 @@ func (m *Module) loadClothConfigs() {
 		cloth.Exp = config.Exp
 		cloth.Cost = config.Cost
 		cloth.Star = config.Star
+
+		costNum := new(tool.BigNumber)
+		costNum.Raw(cloth.Level * 200)
+		cloth.Cost = costNum.ToString()
+		cloth.Exp = cloth.Level * 200
+
 		m.clothConfigs = append(m.clothConfigs, cloth)
 	}
 
