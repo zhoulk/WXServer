@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"server/tool"
 	"time"
+
+	"github.com/name5566/leaf/log"
 )
 
 type Player struct {
@@ -98,6 +100,8 @@ func (p *Player) ExpendCloth(num int32) {
 
 // SellCloth  出售衣服
 func (p *Player) SellCloth(t int32, level int32, cost string) {
+	log.Debug("%v", cost)
+
 	var s []int32
 	json.Unmarshal([]byte(p.LvChao), &s)
 

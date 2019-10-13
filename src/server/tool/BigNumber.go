@@ -47,8 +47,10 @@ func (b *BigNumber) ToArr() []int32 {
 func (b *BigNumber) Add(other *BigNumber) {
 	for i := 0; i < MaxLength-1; i++ {
 		b.numArr[i] += other.numArr[i]
-		b.numArr[i+1] += int32(b.numArr[i] / 1000)
-		b.numArr[i] = b.numArr[i] % 1000
+		for b.numArr[i] >= 1000 {
+			b.numArr[i+1]++
+			b.numArr[i] -= 1000
+		}
 	}
 }
 
