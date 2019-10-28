@@ -53,7 +53,7 @@ func (p *Player) Cal() {
 	// log.Debug("%v", s)
 
 	otherNum := new(tool.BigNumber)
-	otherNum.Raw(p.Star * 10)
+	otherNum.Raw(p.Star * 30)
 
 	// log.Debug("%v", otherNum)
 

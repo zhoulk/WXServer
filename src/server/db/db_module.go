@@ -76,6 +76,7 @@ type UserSnapInfo struct {
 type ConfigCloth struct {
 	No    int32
 	Name  string `gorm:"size:16"`
+	Brand string `gorm:"size:16"`
 	Icon  string `gorm:"size:256"`
 	Cost  string `gorm:"size:1024"`
 	Level int32
@@ -102,6 +103,7 @@ type ConfigCP struct {
 	No    int32
 	Name  string `gorm:"size:16"`
 	Icon  string `gorm:"size:256"`
+	Image string `gorm:"size:256"`
 	Level int32
 	Star  int32
 	Type  int32

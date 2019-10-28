@@ -4,6 +4,7 @@ package entry
 type ConfigCloth struct {
 	Id    int32
 	Name  string
+	Brand string
 	Icon  string
 	Cost  string
 	Level int32
@@ -26,6 +27,7 @@ type ConfigCP struct {
 	Id    int32
 	Name  string
 	Icon  string
+	Image string
 	Level int32
 	Star  int32
 	Type  int32

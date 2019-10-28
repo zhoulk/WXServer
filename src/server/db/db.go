@@ -584,6 +584,7 @@ func (m *Module) loadClothConfigs() {
 		cloth := new(entry.ConfigCloth)
 		cloth.Id = config.No
 		cloth.Name = config.Name
+		cloth.Brand = config.Brand
 		cloth.Icon = config.Icon
 		cloth.Type = config.Type
 		cloth.Level = config.Level
@@ -642,6 +643,7 @@ func (m *Module) loadCPConfigs() {
 		cp.Id = config.No
 		cp.Name = config.Name
 		cp.Icon = config.Icon
+		cp.Image = config.Image
 		cp.Level = config.Level
 		cp.Star = config.Star
 		cp.Rate = config.Rate
