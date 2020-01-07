@@ -10,3 +10,4 @@ src/github.com/stamblerre/gocode
 *.v2
 src/golang.org/x/tools
 src/github.com/stamblerre/gocode
+src/github.com/derekparker/delve
