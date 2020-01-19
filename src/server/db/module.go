@@ -200,12 +200,12 @@ func (m *Module) GetOffLineLvChao(uid string) string {
 
 	// log.Debug("GetOffLineLvChao %v %v ", uid, lastLvChao)
 
-	var s []int32
+	var s []int64
 	json.Unmarshal([]byte(lastLvChao), &s)
 	lastNum := new(tool.BigNumber)
 	lastNum.FromArr(s)
 
-	var s2 []int32
+	var s2 []int64
 	json.Unmarshal([]byte(lvChao), &s2)
 	curNum := new(tool.BigNumber)
 	curNum.FromArr(s2)
@@ -454,19 +454,21 @@ func (m *Module) GetBarrage(uid string) []*entry.BarrageReport {
 // ExtraMoney  额外绿钞
 func (m *Module) ExtraMoney(uid string, lvChao string, diamond int32) {
 	otherNum := new(tool.BigNumber)
-	var otherArr []int32
+	var otherArr []int64
 	json.Unmarshal([]byte(lvChao), &otherArr)
 	otherNum.FromArr(otherArr)
 
 	if player, ok := m.players[uid]; ok {
 		bNum := new(tool.BigNumber)
-		var bArr []int32
+		var bArr []int64
 		json.Unmarshal([]byte(player.LvChao), &bArr)
 		bNum.FromArr(bArr)
 		bNum.Add(otherNum)
 
 		bs, _ := json.Marshal(bNum.ToArr())
 		player.LvChao = bytes.NewBuffer(bs).String()
+
+		player.Diamond += diamond
 	}
 
 	extra := new(entry.ExtraMoney)
@@ -548,13 +550,13 @@ func (m *Module) GetDailyGift(uid string) string {
 	}
 
 	otherNum := new(tool.BigNumber)
-	otherArr := []int32{1, 0, 0, 1, 0, 1}
+	otherArr := []int64{1, 0, 0, 1, 0, 1}
 	otherNum.FromArr(otherArr)
 
 	player := m.GetPlayer(uid)
 
 	bNum := new(tool.BigNumber)
-	var bArr []int32
+	var bArr []int64
 	json.Unmarshal([]byte(player.LvChao), &bArr)
 	bNum.FromArr(bArr)
 	bNum.Add(otherNum)

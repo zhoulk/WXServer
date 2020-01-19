@@ -81,7 +81,7 @@ type ConfigCloth struct {
 	Cost  string `gorm:"size:1024"`
 	Level int32
 	Type  int32
-	Exp   int32
+	Exp   int64
 	Star  int32
 
 	gorm.Model

@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"math"
 	"server/config"
 	"server/entry"
 	"server/tool"
@@ -577,8 +578,6 @@ func (m *Module) loadClothConfigs() {
 	m.db.Order("Level").Find(&clothConfigs)
 
 	m.clothConfigs = m.clothConfigs[0:0]
-	power := int32(0)
-	index := int32(1)
 	for _, config := range clothConfigs {
 
 		cloth := new(entry.ConfigCloth)
@@ -592,22 +591,12 @@ func (m *Module) loadClothConfigs() {
 		cloth.Cost = config.Cost
 		cloth.Star = config.Star
 
-		cost := cloth.Level*10 + power
+		// cost := cloth.Level*10 + power
+		cost := int64(50 * math.Pow(1.49, float64(cloth.Level+1)))
 		costNum := new(tool.BigNumber)
 		costNum.Raw(cost)
 		cloth.Cost = costNum.ToString()
 		cloth.Exp = cost
-
-		if index < cloth.Level {
-			index = cloth.Level
-
-			power += 200
-		}
-		if cloth.Level%10 == 0 && index < cloth.Level {
-			power *= 10
-		}
-
-		log.Debug("%v   %v   %v", index, config.Level, cost)
 
 		m.clothConfigs = append(m.clothConfigs, cloth)
 	}

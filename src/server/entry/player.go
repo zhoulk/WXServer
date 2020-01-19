@@ -48,12 +48,13 @@ type Player struct {
 // Cal 计算
 func (p *Player) Cal() {
 	// log.Debug("cal ===> start %v %v ", p.Star, p.LvChao)
-	var s []int32
+	var s []int64
 	json.Unmarshal([]byte(p.LvChao), &s)
 	// log.Debug("%v", s)
 
 	otherNum := new(tool.BigNumber)
-	otherNum.Raw(p.Star * 30)
+	//otherNum.Raw(p.Star * 30)
+	otherNum.Raw(int64(p.Star))
 
 	// log.Debug("%v", otherNum)
 
@@ -72,11 +73,11 @@ func (p *Player) BuyLvChao(num int32) {
 	if p.Diamond >= num {
 		p.Diamond -= num
 
-		var s []int32
+		var s []int64
 		json.Unmarshal([]byte(p.LvChao), &s)
 
 		otherNum := new(tool.BigNumber)
-		otherNum.Raw(num * 10000)
+		otherNum.Raw(int64(num * 10000))
 
 		// log.Debug("%v", otherNum)
 
@@ -102,11 +103,11 @@ func (p *Player) ExpendCloth(num int32) {
 func (p *Player) SellCloth(t int32, level int32, cost string) {
 	log.Debug("%v", cost)
 
-	var s []int32
+	var s []int64
 	json.Unmarshal([]byte(p.LvChao), &s)
 
 	otherNum := new(tool.BigNumber)
-	var otherArr []int32
+	var otherArr []int64
 	json.Unmarshal([]byte(cost), &otherArr)
 	otherNum.FromArr(otherArr)
 

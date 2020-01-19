@@ -9,7 +9,7 @@ type ConfigCloth struct {
 	Cost  string
 	Level int32
 	Type  int32
-	Exp   int32
+	Exp   int64
 	Star  int32
 }
 

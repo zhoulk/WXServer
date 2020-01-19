@@ -365,6 +365,16 @@ type WXGetTokenResponse struct {
 func main() {
 	fmt.Println("start main")
 
+	prices := make([]int64, 40)
+	//power := int64(0)
+	total := int64(0)
+	for i := 0; i < 40; i++ {
+		prices[i] = int64(50 * math.Pow(1.49, float64(i+1)))
+
+		total += prices[i]
+	}
+	fmt.Println("price  ", total, prices)
+
 	m := db.GetInstance()
 	m.ConnectDB()
 	m.CreateTables()
