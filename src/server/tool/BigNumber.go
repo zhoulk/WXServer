@@ -56,7 +56,7 @@ func (b *BigNumber) Add(other *BigNumber) {
 
 // Minus ...
 func (b *BigNumber) Minus(other *BigNumber) {
-	for i := 0; i < len(b.numArr); i++ {
+	for i := 0; i < MaxLength-1; i++ {
 		if b.numArr[i] >= other.numArr[i] {
 			b.numArr[i] -= other.numArr[i]
 		} else {

@@ -479,6 +479,33 @@ func (m *Module) ExtraMoney(uid string, lvChao string, diamond int32) {
 	m.extraMoney = append(m.extraMoney, extra)
 }
 
+func (m *Module) MinusMoney(uid string, lvChao string, diamond int32) {
+	otherNum := new(tool.BigNumber)
+	var otherArr []int64
+	json.Unmarshal([]byte(lvChao), &otherArr)
+	otherNum.FromArr(otherArr)
+
+	if player, ok := m.players[uid]; ok {
+		bNum := new(tool.BigNumber)
+		var bArr []int64
+		json.Unmarshal([]byte(player.LvChao), &bArr)
+		bNum.FromArr(bArr)
+		bNum.Minus(otherNum)
+
+		bs, _ := json.Marshal(bNum.ToArr())
+		player.LvChao = bytes.NewBuffer(bs).String()
+
+		player.Diamond -= diamond
+	}
+
+	extra := new(entry.ExtraMoney)
+	extra.Uid = uid
+	extra.LvChao = lvChao
+	extra.Diamond = diamond
+	extra.Reason = -1
+	m.extraMoney = append(m.extraMoney, extra)
+}
+
 // OpenFrom 来自谁的分享
 func (m *Module) OpenFrom(uid string, fromUid string, t int32) {
 	log.Debug("OpenFrom  ====>  %v ", len(m.openFroms))

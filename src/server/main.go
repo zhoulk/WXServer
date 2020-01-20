@@ -407,6 +407,7 @@ func main() {
 	http.HandleFunc("/reward", RewardHandler)
 	http.HandleFunc("/getBarrage", GetBarrageHandler)
 	http.HandleFunc("/extraMoney", ExtraMoneyHandler)
+	http.HandleFunc("/minusMoney", MinusMonetHandler)
 	http.HandleFunc("/openFrom", OpenFromHandler)
 	http.HandleFunc("/getPreUserInfo", GetPreUserHandler)
 	http.HandleFunc("/dailyGift", DailyGiftHandler)
@@ -1426,6 +1427,53 @@ func ExtraMoneyHandler(w http.ResponseWriter, req *http.Request) {
 		w.Write(resBytes)
 	}
 	log.Debug("ExtraMoneyHandler end ===================================")
+}
+
+// MinusMonetHandler ...
+func MinusMonetHandler(w http.ResponseWriter, req *http.Request) {
+	log.Debug("MinusMonetHandler start ===================================")
+
+	setCrossHeader(w, req)
+
+	if req.Method != "POST" {
+		return
+	}
+
+	// 打印客户端头信息
+
+	result, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		res := new(ExtraMoneyResponse)
+		res.Code = 400
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+		w.Write(resBytes)
+	} else {
+		var str = bytes.NewBuffer(result).String()
+		log.Debug("MinusMonetHandler request %v", str)
+
+		var s ExtraMoneyRequest
+		json.Unmarshal([]byte(str), &s)
+
+		m := db.GetInstance()
+		m.MinusMoney(s.Uid, s.LvChao, s.Diamond)
+
+		res := new(ExtraMoneyResponse)
+		res.Code = 200
+
+		// 给客户端回复数据
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			fmt.Println("生成json字符串错误")
+		}
+
+		log.Debug("ExtraMoneyHandler response %v", bytes.NewBuffer(resBytes).String())
+		w.Write(resBytes)
+	}
+	log.Debug("MinusMonetHandler end ===================================")
 }
 
 // OpenFromHandler ...
