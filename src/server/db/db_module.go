@@ -20,7 +20,7 @@ type User struct {
 type UserBaseInfo struct {
 	Uid     string `gorm:"size:64;unique;not null"`
 	Name    string `gorm:"size:64"`
-	HeadUrl string `gorm:"size:128"`
+	HeadUrl string `gorm:"size:256"`
 	Star    int32
 	Exp     int32
 	LvChao  string `gorm:"size:1024"`

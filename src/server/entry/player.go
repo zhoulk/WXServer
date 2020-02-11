@@ -48,6 +48,17 @@ type Player struct {
 // Cal 计算
 func (p *Player) Cal() {
 	// log.Debug("cal ===> start %v %v ", p.Star, p.LvChao)
+	//log.Debug("cal ===> start %v %v", p.UserId, p.LogoutTime)
+
+	now := time.Now()             //取到当前的时间点
+	subM := now.Sub(p.LogoutTime) //通过这个方法我们可以将两个事件差值计算出来
+	// fmt.Println(int(subM.Hours()), "Hours") //我们打印一下相距的小时数
+	//log.Debug("cal ===> start %v", subM.Hours())
+	// 离线最多8小时的收益
+	if subM.Hours() > 8 {
+		return
+	}
+
 	var s []int64
 	json.Unmarshal([]byte(p.LvChao), &s)
 	// log.Debug("%v", s)

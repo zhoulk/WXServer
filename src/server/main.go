@@ -788,6 +788,7 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 						p.UserId = tool.UniqueId()
 					}
 					p.OpenId = result.Openid
+					p.LvChao = "[0,10]"
 					p.Name = s.Name
 					p.HeadUrl = s.HeadUrl
 					// p.Diamond = 100
