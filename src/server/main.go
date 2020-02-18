@@ -430,7 +430,7 @@ func Cal() {
 
 // Persistent 固化
 func Persistent() {
-	for range time.Tick(time.Duration(10) * time.Second) {
+	for range time.Tick(time.Duration(60) * time.Second) {
 		m := db.GetInstance()
 		m.PersistentData()
 	}
@@ -438,8 +438,10 @@ func Persistent() {
 
 // Rank  排序
 func Rank() {
-	m := db.GetInstance()
-	m.Rank()
+	for range time.Tick(time.Duration(600) * time.Second) {
+		m := db.GetInstance()
+		m.Rank()
+	}
 }
 
 // GetWXAccessToken 获取 微信token
@@ -1306,13 +1308,17 @@ func RewardHandler(w http.ResponseWriter, req *http.Request) {
 		json.Unmarshal([]byte(str), &s)
 
 		m := db.GetInstance()
-		flag := m.Reward(s.Uid, s.ToUid, s.Msg, s.GiftId)
+		flag, code := m.Reward(s.Uid, s.ToUid, s.Msg, s.GiftId)
 
 		res := new(RewardResponse)
 		if flag {
 			res.Code = 200
 		} else {
-			res.Code = 201
+			if code == 888 {
+				res.Code = 202
+			} else {
+				res.Code = 201
+			}
 		}
 
 		// 给客户端回复数据

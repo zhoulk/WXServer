@@ -6,6 +6,7 @@ import (
 	"errors"
 	"server/tool"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -31,6 +32,7 @@ type Module struct {
 	favourLogs        []*entry.FavourLog
 	favourFlag        map[string]bool
 	favourReportLogs  map[string]*entry.FavourReport
+	favourReportTimes map[string]time.Time
 	barrageReports    []*entry.BarrageReport
 	addBarrageReports []*entry.BarrageReport
 	extraMoney        []*entry.ExtraMoney
@@ -69,6 +71,7 @@ func init() {
 	GetInstance().favourFlag = make(map[string]bool)
 	GetInstance().gainDailyGifts = make(map[string]bool)
 	GetInstance().favourReportLogs = make(map[string]*entry.FavourReport)
+	GetInstance().favourReportTimes = make(map[string]time.Time)
 	GetInstance().extraMoney = make([]*entry.ExtraMoney, 0)
 	GetInstance().openFroms = make([]*entry.OpenFrom, 0)
 
@@ -275,7 +278,7 @@ type fanPlayers []*entry.Player
 
 func (s fanPlayers) Len() int           { return len(s) }
 func (s fanPlayers) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s fanPlayers) Less(i, j int) bool { return s[i].Favour < s[j].Favour }
+func (s fanPlayers) Less(i, j int) bool { return s[i].Favour > s[j].Favour }
 
 // GetFansRank 获取点赞排行
 func (m *Module) GetFansRank(uid string) []*entry.Player {
@@ -367,7 +370,16 @@ func (m *Module) Favour(uid string, toUID string, num int32) {
 }
 
 //Reward 送礼物
-func (m *Module) Reward(uid string, toUID string, msg string, giftID int32) bool {
+func (m *Module) Reward(uid string, toUID string, msg string, giftID int32) (bool, int) {
+
+	if tm, ok := m.favourReportTimes[uid+"-"+toUID+"-"+strconv.Itoa(int(giftID))]; ok {
+		//log.Debug("Reward  ====>  %v %v", time.Now().Format("2006/1/2"), tm.Format("2006/1/2"))
+		if time.Now().Format("2006/1/2") == tm.Format("2006/1/2") {
+			return false, 888
+		}
+	} else {
+		m.favourReportTimes[uid+"-"+toUID+"-"+strconv.Itoa(int(giftID))] = time.Now()
+	}
 
 	var curGift *entry.ConfigGift
 	for _, gift := range m.giftConfigs {
@@ -432,10 +444,10 @@ func (m *Module) Reward(uid string, toUID string, msg string, giftID int32) bool
 			m.barrageReports = append(m.barrageReports, br)
 		}
 
-		return true
+		return true, 0
 	}
 
-	return false
+	return false, 999
 }
 
 // GetBarrage  获取弹幕
