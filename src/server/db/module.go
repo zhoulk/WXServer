@@ -524,7 +524,7 @@ func (m *Module) OpenFrom(uid string, fromUid string, t int32) {
 
 	exist := false
 	for _, p := range m.openFroms {
-		if p.Uid == uid && p.FromUid == fromUid {
+		if p.Uid == uid && p.FromUid == fromUid && p.Type != 3 {
 			exist = true
 			break
 		}
@@ -562,7 +562,7 @@ func (m *Module) GetInvitePlayers(uid string) []*entry.Player {
 	players := make([]*entry.Player, 0)
 	for _, p := range m.openFroms {
 		log.Debug("GetInvitePlayers  ====>  %v %v", p.Uid, p.FromUid)
-		if p.FromUid == uid {
+		if p.FromUid == uid && p.Type != 3 {
 			player := m.GetPlayer(p.Uid)
 			players = append(players, player)
 		}
@@ -588,11 +588,12 @@ func (m *Module) GetDailyGift(uid string) string {
 		m.gainDailyGifts[uid+day] = true
 	}
 
-	otherNum := new(tool.BigNumber)
-	otherArr := []int64{1, 0, 0, 1, 0, 1}
-	otherNum.FromArr(otherArr)
-
 	player := m.GetPlayer(uid)
+
+	otherNum := new(tool.BigNumber)
+	// otherArr := []int64{1, 0, 0, 1, 0, 1}
+	// otherNum.FromArr(otherArr)
+	otherNum.Raw(int64(player.Star * 10 * 3600))
 
 	bNum := new(tool.BigNumber)
 	var bArr []int64
@@ -604,6 +605,14 @@ func (m *Module) GetDailyGift(uid string) string {
 
 	otherBs, _ := json.Marshal(otherNum.ToArr())
 	lvChao := bytes.NewBuffer(otherBs).String()
+
+	// 取消掉邀请
+	for _, p := range m.openFroms {
+		log.Debug("GetInvitePlayers  ====>  %v %v", p.Uid, p.FromUid)
+		if p.FromUid == uid {
+			p.Type = 3
+		}
+	}
 
 	return lvChao
 }
